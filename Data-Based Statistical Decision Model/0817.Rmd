@@ -1,0 +1,75 @@
+---
+title: "Homework"
+author: "Hyeonho Lee"
+date: "2018년 8월 17일"
+output: html_document
+---
+
+(homework) Re-create the data graphic, “Youngest Male Names” (again, your result will be different from the chart below). You can recycle some of the codes above. 
+In particular, the youngest men names are given by the ascending order or median_age. 
+<!-- Your chart should be restricted to birth names given to at least 100,000 male Americans since 1900.  -->
+Use filter() to filter names with at least 100,000  est_num_alive. Can you make the color of the bars Carolina blue?
+
+
+```{r}
+# library(Hmisc)
+# library(mdsr)
+# library(babynames)
+# library(dplyr)
+```
+
+```{r include = FALSE}
+library(Hmisc)
+library(mdsr)d
+library(babynames)
+library(dplyr)
+```
+
+```{r}
+BabynamesDist <- make_babynames_dist()
+head(BabynamesDist, 2)
+```
+
+```{r}
+com_fem <- BabynamesDist %>%
+  filter(sex == "M") %>% filter(est_alive_today!=0) %>%
+  group_by(name) %>%
+  summarise(
+    N = n(), est_num_alive = sum(est_alive_today),
+    q1_age = wtd.quantile(age_today, est_alive_today, probs = 0.25),
+    median_age = wtd.quantile(age_today, est_alive_today, probs = 0.5),
+    q3_age = wtd.quantile(age_today, est_alive_today, probs = 0.75)) %>% filter(est_num_alive >= 100000) %>%
+  arrange(median_age) %>% 
+  head(25)
+```
+
+```{r}
+com_fem
+```
+
+```{r}
+w_plot <- ggplot(
+  data = com_fem, 
+  aes(x = reorder(name, -median_age),  y = median_age)
+  ) + 
+  xlab(NULL) + 
+  ylab("Age (in years)") +
+  ggtitle("Median ages for males with the 25 most common names")
+```
+
+```{r}
+w_plot + 
+  geom_linerange(
+    aes(ymin = q1_age, ymax = q3_age),
+    color = "#6495ED", 
+    size = 5, 
+    alpha = 0.8
+    ) + 
+  geom_point(fill = "#ed3324", colour = "white", size = 4, shape = 21) +
+  coord_flip()
+```
+
+
+
+
+
