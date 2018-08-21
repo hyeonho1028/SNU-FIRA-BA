@@ -129,10 +129,64 @@ $(document).ready(function () {
 
 
 <p>(homework) Re-create the data graphic, “Youngest Male Names” (again, your result will be different from the chart below). You can recycle some of the codes above. In particular, the youngest men names are given by the ascending order or median_age. <!-- Your chart should be restricted to birth names given to at least 100,000 male Americans since 1900.  --> Use filter() to filter names with at least 100,000 est_num_alive. Can you make the color of the bars Carolina blue?</p>
-<pre class="r"><code># library(Hmisc)
-# library(mdsr)
-# library(babynames)
-# library(dplyr)</code></pre>
+<pre class="r"><code>library(Hmisc)</code></pre>
+<pre><code>## Warning: package 'Hmisc' was built under R version 3.5.1</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## Loading required package: survival</code></pre>
+<pre><code>## Loading required package: Formula</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Warning: package 'ggplot2' was built under R version 3.5.1</code></pre>
+<pre><code>## 
+## Attaching package: 'Hmisc'</code></pre>
+<pre><code>## The following objects are masked from 'package:base':
+## 
+##     format.pval, units</code></pre>
+<pre class="r"><code>library(mdsr)</code></pre>
+<pre><code>## Warning: package 'mdsr' was built under R version 3.5.1</code></pre>
+<pre><code>## Warning: package 'mosaic' was built under R version 3.5.1</code></pre>
+<pre><code>## Loading required package: dplyr</code></pre>
+<pre><code>## Warning: package 'dplyr' was built under R version 3.5.1</code></pre>
+<pre><code>## 
+## Attaching package: 'dplyr'</code></pre>
+<pre><code>## The following objects are masked from 'package:Hmisc':
+## 
+##     src, summarize</code></pre>
+<pre><code>## The following objects are masked from 'package:stats':
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre><code>## Loading required package: ggformula</code></pre>
+<pre><code>## Warning: package 'ggformula' was built under R version 3.5.1</code></pre>
+<pre><code>## Loading required package: ggstance</code></pre>
+<pre><code>## Warning: package 'ggstance' was built under R version 3.5.1</code></pre>
+<pre><code>## 
+## Attaching package: 'ggstance'</code></pre>
+<pre><code>## The following objects are masked from 'package:ggplot2':
+## 
+##     geom_errorbarh, GeomErrorbarh</code></pre>
+<pre><code>## 
+## New to ggformula?  Try the tutorials: 
+##  learnr::run_tutorial(&quot;introduction&quot;, package = &quot;ggformula&quot;)
+##  learnr::run_tutorial(&quot;refining&quot;, package = &quot;ggformula&quot;)</code></pre>
+<pre><code>## Loading required package: mosaicData</code></pre>
+<pre><code>## Warning: package 'mosaicData' was built under R version 3.5.1</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## 
+## The 'mosaic' package masks several functions from core packages in order to add 
+## additional features.  The original behavior of these functions should not be affected by this.
+## 
+## Note: If you use the Matrix package, be sure to load it BEFORE loading mosaic.</code></pre>
+<pre><code>## 
+## In accordance with CRAN policy, the 'mdsr' package 
+##            no longer attaches
+## the 'tidyverse' package automatically.
+## You may need to 'library(tidyverse)' in order to 
+##            use certain functions.</code></pre>
+<pre class="r"><code>library(babynames)</code></pre>
+<pre><code>## Warning: package 'babynames' was built under R version 3.5.1</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
 <pre class="r"><code>BabynamesDist &lt;- make_babynames_dist()
 head(BabynamesDist, 2)</code></pre>
 <pre><code>## # A tibble: 2 x 9

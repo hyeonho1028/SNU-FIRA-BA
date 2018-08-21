@@ -1,0 +1,58 @@
+---
+title: "0820_statistic"
+author: "Hyeonho Lee"
+date: "2018년 8월 20일"
+output: html_document
+---
+```{r}
+library(glmnet)
+library(ISLR)
+Hitters = na.omit(Hitters)
+```
+
+```{r}
+dim(Hitters)
+x = model.matrix(Salary~., Hitters)[,-1]
+y = Hitters$Salary
+```
+
+
+```{r}
+n = 263
+B = 1000
+best = matrix(0,B,20)
+```
+
+```{r}
+for(b in (1:B))
+{
+  bid = sample(n,n,replace = T)
+  bx = x[bid,]
+  by = x[bid]
+  grid = 10^seq(4, -1, length = 100)
+  cv.out = cv.glmnet(bx, by, alpha = 1, lambda = grid)
+  blamb = cv.out$lambda.min
+  lasso.mod = glmnet(bx, by, alpha = 1, lambda = exp(blamb))
+  best[b,] = as.vector(coef(lasso.mod))
+  
+  cat('\t b=')
+  cat(b)
+}
+```
+
+```{r}
+lasso.mod = glmnet(x, y, alpha = 1, lambda = exp(blamb))
+est = as.vector(coef(lasso.mod))
+se = sqrt(apply(best, 2, var))
+tstat = est/se
+tstat
+
+pvalue = 2*(1-pnorm(abs(tstat)))
+pvalue
+
+select = (best!=0)
+stab = apply(select, 2, sum)/B
+numselect = apply(select, 1, sum)
+hist(numselect)
+```
+
