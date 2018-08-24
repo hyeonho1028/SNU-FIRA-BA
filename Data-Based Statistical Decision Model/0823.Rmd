@@ -1,0 +1,134 @@
+---
+title: "homework"
+author: "Hyeonho Lee"
+date: "2018년 8월 23일"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+---
+
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(OpenMx)
+library(broom)
+library(ggplot2)
+data(twinData)
+twinData <- as_tibble(twinData)
+```
+8번
+
+compare weight this time. You should be able to recycle almost all code chunks.
+
+이번에는 몸무게를 비교하십시오. 거의 모든 코드 덩어리를 재활용 할 수 있어야합니다
+```{r}
+condition = twinData %>% 
+  group_by(cohort,zygosity) %>%  
+  do(tidy( cor.test(~ ht1 + ht2, alternative = "greater" , data = . ))) %>% 
+  filter(estimate >= 0.5)
+
+twinData$significantly_similar[twinData$cohort %in% condition[1:3,]$cohort &
+                                 twinData$zygosity %in% condition[1:3,]$zygosity] = '>=.5'
+twinData$significantly_similar[twinData$cohort %in% condition[4:5,]$cohort &
+                                 twinData$zygosity %in% condition[4:5,]$zygosity] = '>=.5'
+twinData$significantly_similar[is.na(twinData$significantly_similar)] = '<.5'
+
+twinData %>% na.omit() %>% ggplot(mapping = aes(ht1, ht2, color = significantly_similar)) + 
+  geom_point() + 
+  facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
+
+9번
+
+8번과 동일하되 ht1, ht2 대신에 wt1, wt2로 해라.
+```{r}
+condition2 = twinData %>% 
+  group_by(cohort,zygosity) %>%  
+  do(tidy( cor.test(~ wt1 + wt2, alternative = "greater" , data = . ))) %>% 
+  filter(estimate >= 0.5)
+
+twinData$significantly_similar2[twinData$cohort %in% condition2[1:2,]$cohort &
+                                 twinData$zygosity %in% condition2[1:2,]$zygosity] = '>=.5'
+twinData$significantly_similar2[twinData$cohort %in% condition2[3:4,]$cohort &
+                                 twinData$zygosity %in% condition2[3:4,]$zygosity] = '>=.5'
+twinData$significantly_similar2[is.na(twinData$significantly_similar2)] = '<.5'
+
+twinData %>% na.omit() %>% ggplot(mapping = aes(wt1, wt2, color = significantly_similar2)) + 
+  geom_point() + 
+  facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
+
+10번 문제
+
+도표와 같은 그래프를 그려라
+```{r}
+twinData_1 = twinData %>% select(ht1, ht2) %>% gather(key = "order", value = "heigth") %>% 
+  cbind(twinData$cohort, twinData$zygosity)
+colnames(twinData_1)[3:4] = c('cohort', 'zygosity')
+
+twinData_1 %>% na.omit() %>% ggplot(mapping = aes(order, heigth)) +
+  geom_boxplot() +
+  facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
+11번
+
+Inspect the data graphic. Is there any need to adjust the hypothesis (posed in Question #2)?
+
+Are the first-born taller than the second-born?
+
+order과 younger의 차이가 없으므로 처음 제시한 가설인 첫 번째 태어난 아이의 키의 높이가 
+
+각 하위 그룹의 두 번째 태어난 아이와 크게 다르지 않다고 할 수 있다.
+
+
+12번
+
+Use the paired t-test to test whether the first-born’s height is significantly different from the second-born for each subgroup.
+
+Why do we use the paired t-test, as opposed to using the two-sample t-test?
+
+Test whether there is a difference with significance level 5%, for each subgroup.
+
+Finally, recreate the above graphic with different colors indicating the results of t-tests.
+```{r}
+twinData %>% group_by(cohort, zygosity) %>% 
+  with(t.test(.$ht1, .$ht2, data=., paired = TRUE, p = 0.025))
+```
+
+```{r}
+twinData %>% group_by(cohort, zygosity) %>% 
+  do(tidy(t.test(.$ht1, .$ht2, data=., paired = TRUE, p = 0.025))) %>% .$p.value %>% 
+  round(2)
+```
+ - 쌍둥이 이기 때문에, paired 비교가 적합하다.
+ 
+ - H0가 차이가 없다이고, H1은 차이가 있다이다. 유의수준 5% 볼 때, 
+ 8그룹이 차이가 있고, 2그룹이 차이가 없다고 판단을 내린다.
+
+
+```{r}
+twinData_1 %>% na.omit() %>% ggplot(mapping = aes(order, heigth))+#, color = ggpubr::stat_compare_means(method = "t.test")) +
+  geom_boxplot() +
+  facet_grid(rows = vars(cohort), cols = vars(zygosity)) + ggpubr::stat_compare_means(method = "t.test")
+```
+
+```{r}
+ggpubr::stat_compare_means(ht1~ht2, data = twinData_1, method = "t.test", paired = TRUE, na.rm = TRUE, mapping = aes(ht1, ht2))
+```
+
+
+
+
+
+
+
+
+
+
+
+
