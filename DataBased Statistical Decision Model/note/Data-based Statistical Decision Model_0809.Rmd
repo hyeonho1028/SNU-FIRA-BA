@@ -1,0 +1,514 @@
+---
+title: "Data-based Statistical Decision Model_0809"
+author: "Hyeonho Lee"
+date: "2018년 8월 9일"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+
+
+통계적 모델링 vs 딥러닝 모델링
+
+딥러닝은 왜 잘되는지 모르겠다. 다른 데이터를 넣었을 때도 잘되는지에 대한 확신을 할 수 없다.(물론 거의 다 잘되긴 한다.)
+
+일반화를 할 수 없다.
+
+분포를 알고 있을때, b0, b1을 알수있다.(모집단(데이터)에서 샘플링을 한다..?)
+
+요새 나오는 데이터는 모집단 중 몇개 샘플을 선정하는 방식이 아니다.
+
+데이터가 계속 들어오는 방식이다. (실시간, 스트리밍 데이터?)
+
+###Why it’s reasonable to do statistical inference on a complete data set
+1. 측정할 때 생기는 error - 실제값보다 높게 or 낮게 나오는.. systematic(설명을 할 수 있는 error)는 모델에 반영이 되어야 한다.
+
+2. statistical error은 왜 생기는지 모르는 error/ but 에러의 분포는 알 수 있다. (sampling distribution)
+
+가정 : systematic에러가 없다면, 에러의 분포는 알 수 있다. 에러가 정규분포의 분산을 부여했을 때 따를 수도 있다.?
+
+3. Account for accidental values : aiming at the general, underlying trends
+
+4. 데이터의 분포가 있다고 할 때, 과거로 돌아가서 다시 관측하여도 분포는 동일하다고 한다.?
+
+
+###Statistical Models
+x와 y가 관계가 있는데 어떤 관계가 있다. = 이것도 모형임.
+
+###Example: Conceivable statistical models for the BEA data
+1. X값이 정해져 있을 때, Y값이 정해져 있다. // X와 Y|X는 정규분포를 따를 때, 별로 안좋은 모형임
+
+2. X는 어떠한 무한개의 정규분포를 따른다. // Y|X는 정규분포 정해진거.
+
+3. Y|X의 분산은 임의의 분산
+
+4. X는 어떤 무한개의 분산
+
+5. x와 y의 관계는 선형이다. - 굉장히 General 해지고 있음.
+
+6. 점점 relax해지는 과정 
+
+7. X나 Y나 독립은 아닐수도 있지만 uncorrelation
+
+7 > 6 > 5 > 4 > 3 > 2 > 1 
+
+
+
+
+###Models, inference and model checking
+1번 같은 모형은 쓰이지 않는다.
+
+7번도 가정이 많이 들어간 경우.
+
+가정이 많이 들어간 모형일 수록 설명해야 하는 부분이 적어진다.
+
+적게 들어갈수록 어려워진다.
+
+이 모형이 맞다고 가정했을 때, parameter와 prediction check
+
+모형에 대한 check가 필요
+
+model checking은 답이 없다.
+
+이렇게 해야 맞는거다라는 사람의 의견이 전부 다르다.(Art적인 부분, 이정도면 내가 이렇게 볼 수 있을 것 같다. <경험의 차이>)
+
+###Simple Linear Regression
+- 7번 모형을 적용 시킨다
+
+x의 분포는 가정을 하지 않는다, (deterministic : 랜덤이 아니다.)
+
+x와 y는 선형관계이다. noise는 값으로 들어간다.
+
+분산은 똑같은 분산으로 나온다. 등분산성??, noise값은 x와 관계가 없다. 오늘 noise와 내일 noise는 서로 관게가 없다. 잔차의 등분산성, 독립성인가..??
+
+noise값의 평균이 0이라는 가정은 별로 중요하지않다.
+
+linear regression은 general한 모형이다.
+
+b0 and b1 의 optimal linear predictor?
+
+###Estimation
+b1 = cov(x, y) / var(x)
+
+data point가 n개가 있을 때, b1을 찾을 수 있다.
+
+s^2 = 1/n sigma(xi - bar(x))^2
+
+cov(x, y) = 1/n(xi-bar(x))(yi-bar(y))
+
+###Inference: What can we say more about the model?
+b1이 얼마나 좋은가?
+
+샘플에서 계산한 b1 hat이 b1과 같은가? - 다르다. 물론 같을 수도 있다.
+
+b1 hat은 b1과 언제 비슷할까? - n이 충분히 클때 성립한다. b1 = Cov(x, y)/var(x), b1 hat = Cxy/Sx^2
+
+대수의 법칙의 의해서( xi들의 평균을 구하면 expected x로 간다. i가 충분히 크면)
+
+observation을 많이 하면 할 수록 정확도 올라간다.
+
+what is the expected magnitude "b1 hat - b1"?
+
+꼬리의 noise가 두텁다.
+
+###The optimal linear predictor
+m(x)=E[Y]+Cov[X,Y]/Var[X](x−E(X))
+
+equals the model formula β0+β1x , if the model is true.
+
+###Estimation
+1. From the optimal linear predictor of Y
+
+2. From the objective function("MSE")
+
+linear regression은 sample variance가 0인경우 할 수 없는데, 이건 말이 안된다..
+
+###How good these estimates are?
+1. bias가 존재하는지 안하는지를 확인, 평균적으로 b1에 있으면 unbias라고 이야기한다.
+
+2. variance의 크기를 봐야한다. variance자체는 이야기할게 없지만 작으면 더 좋다.
+
+3. b1의 sampling distribution of b1 hat, but it is not possible(가정을 충분히 하지 않았기 때문에)
+
+###Constant plus noise representation
+Note that the “noise” term is a weighted sum of uncorrelated noises.
+
+Also note that we have used a model assumption here (which one?).
+
+###일부로 bias를 주어서 mse를 낮추는 방법...lasso ridge
+MSE(b1 hat) = var(b1 hat) + bias(b1 hat)
+
+
+###Predictions
+머신러닝의 경우 예측값에 대해 이야기하는것이 또 중요.
+
+예측도 여러가지 종류가 있다.
+
+
+
+Var(m^(x))=σ2n(1+(x−x¯)2s2X) 이 식이 의미하는 바 :
+
+데이터의 중심 x bar 에서 멀어질수록 분산이 증가하므로 예측력이 떨어진다. 
+
+
+###Estimating sigma^2
+MSE 구해지는 방식은 1n∑i=1n(yi−(β^0+β^1x))2:=σ^2=in-sample MSE(β^0,β^1) 이게 나올수도 있고,
+                    
+.                   s2=nn−2σ^2 이게 나올 수도 있다.
+
+###Residuals는 모델 checking 할때 많이 쓰인다.
+(mhat(xi))Residuals vs y hat
+
+ei != Ei(입실론i)
+
+
+
+
+###Limitations of Least Squares
+어떤의미에서 가장 좋은 estimate인가?
+
+옛날엔 중요햇는데 요즘엔 안중요 가정이 틀렸을때의 (틀린 가정에서의 모델의 estimate가 좋아서 뭐하는가)
+
+distribution가정을 더해서 더 볼것이다.
+
+
+###R demonstration
+
+```{r}
+sim.linmod <- function(n, beta.0, beta.1, width, df) {
+    # draw n points from a uniform distribution centered on 0
+    x <- runif(n, min=-width/2, max=width/2)
+    # draw n points from a t distribution with the given number of degrees
+    # of freedom
+    epsilon <- rt(n, df=df)
+    # make y from a linear model
+    y <- beta.0 + beta.1*x + epsilon
+    # return the data frame
+    return(data.frame(x=x, y=y))
+}
+```
+
+```{r}
+ # Make a very small simulated data set from our running examing
+toy.data <- sim.linmod(n=10, beta.0=5, beta.1=-2, width=4, df=3) 
+# Fit the simple linear regression model to it by least squares 
+lm(y~x, data=toy.data)
+```
+
+
+```{r}
+names(lm(y~x, data=toy.data))
+```
+
+
+```{r}
+toy.lm <- lm(y~x, data=toy.data)
+```
+
+```{r}
+coefficients(toy.lm) 
+```
+
+```{r}
+fitted(toy.lm)
+```
+
+```{r}
+residuals(toy.lm)
+```
+
+```{r}
+predict(toy.lm, newdata=data.frame(x=1:5))
+```
+
+```{r}
+plot(y~x, data=toy.data, xlab="x",ylab="y", main="Simulated ('toy') data")
+abline(toy.lm)
+```
+
+```{r}
+plot(toy.lm)
+```
+
+
+###The Gaussian-Noise Simple Linear Regression Model
+지금까지는 정규분포가정을 하지 않고 했다.
+
+정규분포를 가정하고 이야기하게 되면 더 많은 이야기를 할 수 있다.
+
+###why gaussian noise?
+1. central limit theorm
+
+2. mathematical convenience
+
+###The gaussian-noise simple linear regression model
+estimation by maximzing the likelihood
+
+Advantages of the Gaussian model
+
+noise에 대한 normal distribution
+
+(데이터)분포를 알고 있을 때, mle를 가장 크게 만드는 parameter을 찾아줄수 있다면, 최소제곱법으로 찾은
+
+더 좋은 estimeter라고 할 수 있다.
+
+모델에 대한 작업 ---- mse or sse를 가장 작게하는 
+
+분포를 안다면 mle가 가장 좋다..................---------- mle == modeling 이렇게 만드는게 가장 좋은거라는거네 그럼
+
+###Model checking or so-called diagnostics
+model fit 을 가정한 다음에 맞는지 ----- model checking 매우 어려움////경험적인듯. 
+
+우리가 가정한 모델이 맞는지 보는것. 우리가 직접 noise를 관측한다면 ~~~~~ 대신에 잔차를..
+
+Simple Linear Regression Model assumptions - 가정을 했을 때, 
+
+중요한 가정 : 선형성, 등분산성, E가 +로 더해진다. + x, y가 uncorrelated
+
+###Residuals are the key in diagnostics
+잔차를 봐야한다.
+
+Ei = ei 입실론i hat은 ei가 아니다. 정확히 말하면, 그러나 근사하기 때문에 일단은 이렇게 적용
+
+ei = yi - (bo hat + b1 hat * xi)
+
+mse를 function같이 생각했을 때, 
+
+1. σ2=E(ϵ2)=MSE(β0,β1) 가 된다.
+
+2. σ^2=1n∑ni=1e2i=in-sample MSE(β^0,β^1)  : ^ = hat
+
+
+###Residual vs predictor (ei vs xi) plot
+```{r}
+ # Load the data set
+library(gamair)
+data(chicago)
+# Plot deaths each day vs. temperature
+plot(death ~ tmpd, data=chicago,
+     xlab="Temperature (Farenheit)",
+     ylab="Mortality (deaths/day)",
+     main = "Plot of the data along with the estimated linear model")
+# Estimate and store a linear model
+death.temp.lm <- lm(death ~ tmpd, data=chicago)
+abline(death.temp.lm, col="blue")
+```
+
+
+```{r}
+# Always plot residuals vs. predictor variable
+plot(chicago$tmpd, residuals(death.temp.lm),
+     xlab="Temperature (F)",
+     ylab="Prediction error (deaths/day)",
+     main = "Residuals (vertical axis) vs. the predictor variable of temperature")
+abline(h=0, col="grey")
+```
+
+```{r}
+plot(chicago$tmpd, abs(residuals(death.temp.lm)),
+     xlab="Temperature (F)",
+     ylab="Absolute prediction error (deaths/day)")
+abline(h=sqrt(mean(residuals(death.temp.lm)^2)),
+       lwd=2, col="grey")
+# 잘못들어간 xlim, ylim 아마 값이 잘못 설정된듯.
+```
+
+다중회귀분석의 경우 fitted value와 residuals을 봐라 plot(lm)하면 첫번재 나오는 plot
+여러개의 x값이기 때문에 보기 어려움.
+
+###Finding the source of other systematic laws of noise
+```{r}
+# Always plot residuals vs. coordinate
+plot(as.Date(chicago$time,origin="1993-12-31"),
+     residuals(death.temp.lm), xlab="Date",
+     ylab="Prediction error (deaths/day)")
+```
+
+residuals가 서로 상관성이라거나, 독립성이라거나
+
+사실, 비상관성 및 독립성인것을 봐야한다.
+
+보는방법은 사실 굉장히 어렵다. 볼려면 아마도, 두개사의 입실론 i의 값들을
+
+늘려서 평균값을 구해서 보면된다. 불가능함. 예를들어, E11~E1n, E21~E2n 같은 등의 느낌으로
+
+특정 간격마다 noise가 관련이 있을 수가있다(하루 or 일주일)
+
+구조의 단순화가 이루어짐. 오늘의 noise와 내일의 noise가 correlation이 있는지 보는 듯한.
+
+pair가 여러개가 생기고 관측값이 많으면 <observation> distribution parameter들을 볼수가 있다
+
+상관성이 오늘하고 내일의 하루차이 correlation 있는지 보고, 구조적으로 전체를 판단??
+
+```{r}
+# Always plot successive residuals against each other
+  # head() and tail() here are used to get "every day except the last"
+  # and "every day except the first", respectively
+  # see help(head)
+plot(head(residuals(death.temp.lm),-1),
+     tail(residuals(death.temp.lm),-1),
+     xlab="Residual today",
+     ylab="Residual tomorrow")
+abline(lm(tail(residuals(death.temp.lm),-1) ~ head(residuals(death.temp.lm),-1)))
+```
+
+```{r}
+# Always plot successive residuals against each other
+  # head() and tail() here are used to get "every day except the last"
+  # and "every day except the first", respectively
+  # see help(head)
+plot(head(residuals(death.temp.lm),-1),
+     tail(residuals(death.temp.lm),-1),
+     xlab="Residual today",
+     ylab="Residual tomorrow", xlim = c(-50, 50), ylim = c(-50, 50))
+abline(lm(tail(residuals(death.temp.lm),-1) ~ head(residuals(death.temp.lm),-1)))
+```
+
+딱히 추세가 안보이고, 그냥 둥그렇게 뭉쳐있는것으로 보아 뭐 모델이 나쁘지 않은듯 하다.
+
+```{r}
+# Always plot distribution of residuals
+hist(residuals(death.temp.lm),breaks=40,
+     freq=FALSE,
+     xlab="Residual (deaths/day)", main="")
+curve(dnorm(x,mean=0,sd=sd(residuals(death.temp.lm))),
+      add=TRUE,col="blue")
+
+ # An alternative: plot vs. theoretical Gaussian distribution
+qqnorm(residuals(death.temp.lm))
+qqline(residuals(death.temp.lm))
+```
+
+정규분포같이 보이는듯 하다.
+
+qqplot의 경우 정규성을 좀 띄는듯?
+
+mean이 0인 이유는 밀도함수는 평균이 0이란다...파란색 정규분포
+
+###Generalization errors
+이 데이터를 이용해서 model을 fit했는데 이 model이 others data에도 fitting이 되는가
+
+옛날에는 b0와 b1을 알고 싶었는데, 요즘은 prediction이 더 하고싶다.
+
+data를 random으로 나눈다.
+
+Cross-validation
+
+```{r}
+# Always look at whether the model can extrapolate to
+# new data
+# Basic check: randomly divide into two parts, here say 90% of the data # vs. 10%
+# Use the "training set" to estimate the model
+training.rows <- sample(1:nrow(chicago), size=round(nrow(chicago)*0.9),
+                        replace=FALSE)
+training.set <- chicago[training.rows,]
+# We'll use the "testing set" to see how well it does
+testing.set <- chicago[-training.rows,]
+# Estimate the model on the training set only 
+training.lm <- lm(death ~ tmpd, data=training.set) 
+  # Make predictions on the testing set
+  # The model didn't get to see these points while it was being
+  # estimated, so this really checks (or tests) whether it can
+  # predict
+testing.preds <- predict(training.lm, newdata=testing.set)
+# Unfortunately residuals() doesn't know about the new data set # so calculate the residuals by hand
+testing.residuals <- testing.set$death-testing.preds
+```
+
+
+Looking at the out-of-sample residuals
+
+Remember that the data points here were not available to the model during estimation. 
+
+The grey line marks the average we’d see on the training set (zero), while the red line shows the average on the testing set.
+```{r}
+# Plot our residuals against the predictor variable
+plot(testing.set$tmpd, testing.residuals,
+     xlab="Daily mean temperature (F)",
+     ylab="Prediction error (deaths/day)",
+     main="Out-of-sample residuals")
+abline(h=0,col="grey")
+abline(h=mean(testing.residuals),col="red")
+
+# Plot absolute residuals vs. predictor variable
+plot(testing.set$tmpd, abs(testing.residuals),
+     xlab="Daily mean temperature (F)",
+     ylab="Absolute prediction error (deaths/day)",
+     main="Out-of-sample absolute residuals")
+abline(h=sqrt(mean(residuals(training.lm)^2)),col="grey")
+abline(h=sqrt(mean(testing.residuals^2)),col="red")
+```
+
+
+```{r}
+# Find the low-temperature days
+lowtemp.rows <- which(chicago$tmpd < 75) # About 90% of the data # Divide into low- and high- temperature data sets
+lowtemp.set <- chicago[lowtemp.rows,]
+hightemp.set <- chicago[-lowtemp.rows,]
+# Estimate the model on the colder days only
+lowtemp.lm <- lm(death ~ tmpd, data=lowtemp.set)
+   # For you: how much do the parameters change, as compared to
+   # using all the data?
+# Now predict on the high-temperature days
+  # Again, these are new data points, but now systematically
+  # different (because of their temperature) from the
+  # data used to estimate
+hightemp.preds <- predict(lowtemp.lm, newdata=hightemp.set) # Calculate our own residuals
+hightemp.residuals <- hightemp.set$death-hightemp.preds
+```
+
+```{r}
+# Plot residuals vs. temperature
+plot(hightemp.set$tmpd, hightemp.residuals,
+     xlab="Daily mean temperature (F)",
+     ylab="Prediction error (deaths/day)",
+     main="Out-of-sample residuals")
+# Flat line at 0 (ideal, if the model is right)
+abline(h=0,col="grey")
+# Flat line at the mean of the new residuals
+abline(h=mean(hightemp.residuals),col="red")
+# Regressing the new residuals on temperature does not look good... 
+abline(lm(hightemp.residuals ~ hightemp.set$tmpd),col="purple")
+
+# Similar plots for the absolute residuals
+plot(hightemp.set$tmpd, abs(hightemp.residuals),
+     xlab="Daily mean temperature (F)",
+     ylab="Absolute prediction error (deaths/day)",
+     main="Out-of-sample absolute residuals")
+abline(h=sqrt(mean(residuals(lowtemp.lm)^2)),col="grey")
+abline(h=sqrt(mean(hightemp.residuals^2)),col="red")
+abline(lm(abs(hightemp.residuals) ~ hightemp.set$tmpd),col="purple")
+```
+보라색선이 온도가 높을때와 낮을때가, 음 뭔가 뭐랄까 증가하는 추세?
+
+추세를 보기 위해
+
+즉 온도가 높을때와 낮을때의 차이가 증가하는 추세라??? 는 강력한 증거가 된다고 한다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

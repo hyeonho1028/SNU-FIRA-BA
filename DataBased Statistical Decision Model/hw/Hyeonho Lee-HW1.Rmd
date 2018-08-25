@@ -1,0 +1,57 @@
+---
+title: "Rmarkdown exercises"
+author: "Hyeonho Lee"
+date: "2018년 8월 11일"
+output: html_document
+---
+
+
+--------------------------------------------------------------------------------
+
+###3-1
+
+* _Statistics Courses_
+    1. Linear Regression - __2018__
+    1. Estimation and testing - __2018__
+    1. Maximum likelihood estimation - __2018__ 
+
+--------------------------------------------------------------------------------
+
+###3-2
+
+![Maximum likelihood estimation](D:/second semester/data based/hw/image.png)
+address : [Maximum likelihood estimation](https://www.probabilitycourse.com/chapter8/8_2_3_max_likelihood_estimation.php)
+
+--------------------------------------------------------------------------------
+
+###4-1
+
+```{r}
+dat <- read.csv("D:/second semester/data based/hw/mtmv_data_10_12.csv")
+dat_lm <- lm(vote_share~mshare, data = dat)
+```
+
+--------------------------------------------------------------------------------
+
+###4-2
+
+```{r}
+plot(dat$mshare, dat$vote_share, ylab = "vote_share", xlab = "mshare")
+abline(dat_lm)
+```
+
+
+--------------------------------------------------------------------------------
+
+###4-3
+
+회귀선이 나름 vote_share를 잘 설명한다고 할 수 있다.
+
+그러나 vote_share이 분포가 너무 퍼져있기 때문에, 회귀선으로 예측하는 것은 옳은 
+
+방향이 아니라고 생각한다.
+
+결론은 mshare가 vote_share에 영향을 준다고 결론을 내릴 수 있다.
+
+--------------------------------------------------------------------------------
+

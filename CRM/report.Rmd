@@ -1,0 +1,531 @@
+---
+title: "crm_report"
+author: "Hyeonho Lee"
+date: "2018년 8월 23일"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+---
+
+data load
+```{r}
+library(dplyr)
+mailorder = read.csv('D:/second semester/crm/mailorder.csv')
+```
+
+
+1. Randomly select 500 customers in the validation sample. Calculate the number of customers who actually made purchases. 
+(This is the baseline case. That is, it represents the hit rate without employing models.)
+```{r}
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+ind = sample(1:nrow(mailorder2), nrow(mailorder2), replace = FALSE)
+mailorder2_1 = mailorder2[ind <= 500,]
+
+mean(mailorder2$purchase)
+```
+
+
+2. Create 222 RFM codes for estimation and validation sample. Note that the median of recency, 0.5(recency) is 12, 0.5(frequency) is 2, and 0.5(monetary) = $209. Hence,
+       
+Based on the RFM analysis of the estimation sample, select 500 customers (in the validation sample) with the highest purchase potentials. Calculate the number of customers who actually made purchases. 
+
+```{r}
+mailorder1$R = cut(mailorder1$recency, breaks = c(min(mailorder1$recency), 12, 
+                                                  max(mailorder1$recency)),include.lowest = T, labels = c(2,1))
+mailorder1$F = cut(mailorder1$frequency, breaks = c(min(mailorder1$frequency)-1, 2, 
+                                                    max(mailorder1$frequency)),rigth = T, labels = c(1, 2))
+mailorder1$M = cut(mailorder1$monetary, breaks = c(min(mailorder1$monetary)-1, 208, 
+                                                   max(mailorder1$monetary)),rigth = T, labels = c(1, 2))
+mailorder2$R = cut(mailorder2$recency, breaks = c(min(mailorder2$recency), 12, 
+                                                  max(mailorder2$recency)),include.lowest = T, labels = c(2,1))
+mailorder2$F = cut(mailorder2$frequency, breaks = c(min(mailorder2$frequency)-1, 2, 
+                                                    max(mailorder2$frequency)),rigth = T, labels = c(1, 2))
+mailorder2$M = cut(mailorder2$monetary, breaks = c(min(mailorder2$monetary)-1, 208, 
+                                                   max(mailorder2$monetary)),rigth = T, labels = c(1, 2))
+mailorder1$R = varhandle::unfactor(mailorder1$R)
+mailorder1$F = varhandle::unfactor(mailorder1$F)
+mailorder1$M = varhandle::unfactor(mailorder1$M)
+mailorder2$R = varhandle::unfactor(mailorder2$R)
+mailorder2$F = varhandle::unfactor(mailorder2$F)
+mailorder2$M = varhandle::unfactor(mailorder2$M)
+
+
+mean_pur = mailorder1 %>% select(R, F, M, purchase) %>% group_by(R, F, M) %>% 
+  summarise(mean_purchase = mean(purchase))%>% arrange(desc(mean_purchase))
+
+for( i in 1:nrow(mailorder2))
+{
+  for( j in 1:nrow(mean_pur))
+  {
+    if(mean_pur$R[j] == mailorder2$R[i] &
+       mean_pur$F[j] == mailorder2$F[i] &
+       mean_pur$M[j] == mailorder2$M[i])
+    {
+      mailorder2$mean_purchase[i] = mean_pur$mean_purchase[j]
+    }
+  }  
+}
+
+
+mailorder2 %>% select(purchase, mean_purchase) %>% arrange(desc(mean_purchase)) %>% 
+  head(500) %>% summarise(mean = mean(purchase))
+
+
+```
+
+3. Create 555 RFM codes for estimation and validation sample. Use the following rules that divide the sample into five (approximately) equal segments. 
+Hence, Based on the RFM analysis of the estimation sample, select 500 customers (in the validation sample) with the highest purchase potentials. 
+Calculate the number of customers who actually made purchases.
+
+```{r}
+mailorder1$R = cut(mailorder1$recency, breaks = c(min(mailorder1$recency), 4, 8, 12, 16, 
+                                                  max(mailorder1$recency)),include.lowest = T, labels = c(5,4,3,2,1))
+mailorder1$F = cut(mailorder1$frequency, breaks = c(min(mailorder1$frequency)-1, 1, 2, 5, 9, 
+                                                    max(mailorder1$frequency)),rigth = T, labels = c(1,2,3,4,5))
+mailorder1$M = cut(mailorder1$monetary, breaks = c(min(mailorder1$monetary)-1, 113, 181, 242, 299, 
+                                                   max(mailorder1$monetary)),rigth = T, labels = c(1,2,3,4,5))
+mailorder2$R = cut(mailorder2$recency, breaks = c(min(mailorder2$recency), 4, 8, 12, 16, 
+                                                  max(mailorder2$recency)),include.lowest = T, labels = c(5,4,3,2,1))
+mailorder2$F = cut(mailorder2$frequency, breaks = c(min(mailorder2$frequency)-1, 1, 2, 5, 9, 
+                                                    max(mailorder2$frequency)),rigth = T, labels = c(1,2,3,4,5))
+mailorder2$M = cut(mailorder2$monetary, breaks = c(min(mailorder2$monetary)-1, 113, 181, 242, 299, 
+                                                   max(mailorder2$monetary)),rigth = T, labels = c(1,2,3,4,5))
+mailorder1$R = varhandle::unfactor(mailorder1$R)
+mailorder1$F = varhandle::unfactor(mailorder1$F)
+mailorder1$M = varhandle::unfactor(mailorder1$M)
+mailorder2$R = varhandle::unfactor(mailorder2$R)
+mailorder2$F = varhandle::unfactor(mailorder2$F)
+mailorder2$M = varhandle::unfactor(mailorder2$M)
+
+mean_pur = mailorder1 %>% select(R, F, M, purchase) %>% group_by(R, F, M) %>% 
+  summarise(mean_purchase = mean(purchase))%>% arrange(desc(mean_purchase))
+
+for( i in 1:nrow(mailorder2))
+{
+  for( j in 1:nrow(mean_pur))
+  {
+    if(mean_pur$R[j] == mailorder2$R[i] &
+       mean_pur$F[j] == mailorder2$F[i] &
+       mean_pur$M[j] == mailorder2$M[i])
+    {
+      mailorder2$mean_purchase[i] = mean_pur$mean_purchase[j]
+    }
+  }  
+}
+
+
+mailorder2 %>% select(purchase, mean_purchase) %>% arrange(desc(mean_purchase)) %>% 
+  head(500) %>% summarise(mean = mean(purchase))
+```
+
+4. Apply the following linear regression model to the estimation sample. 
+Purchase = 0 + 1(recency) + 2(frequency) + 3(monetary)
+Based on the coefficient estimates from the regression, estimate the purchase probability of each of 2,000 customers in the validation sample. Select the top 500 customers and calculate the number of customers who actually made purchases.
+```{r}
+model = lm(purchase~recency+frequency+monetary, mailorder1)
+pred = predict(model, mailorder2)
+
+mailorder2$predict = pred
+
+mailorder2 %>% select(purchase, recency, frequency, monetary, predict) %>% arrange(desc(predict)) %>% 
+   head(500) %>% summarise(mean = mean(purchase))
+
+```
+
+Question 5. 
+Propose a model of any form and do the same as above. (Your model will be evaluated in terms of the magnitude of improvement over the above models in validation sample.)
+
+여기서부터 변수 다 넣고 실행
+```{r}
+# 회귀분석
+model = lm(purchase~., mailorder1)
+pred = predict(model, mailorder2)
+
+mailorder2$predict = pred
+
+mailorder2 %>% arrange(desc(predict)) %>% 
+   head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# 회귀분석(변수선택법 사용)
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+model = lm(purchase ~ gender + poly(monetary, 2) + poly(recency, 2) + poly(frequency, 2) + poly(duration, 2), mailorder1)
+model = step(model, direction = 'both')
+pred = predict(model, mailorder2)
+
+mailorder2$predict = pred
+
+mailorder2 %>% arrange(desc(predict)) %>% 
+   head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# 회귀분석 변수 장난치기
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+model = lm(purchase ~ gender + log(monetary) + poly(recency,2) + poly(frequency,2), mailorder1)
+pred = predict(model, mailorder2)
+
+mailorder2$predict = pred
+
+mailorder2 %>% arrange(desc(predict)) %>% 
+   head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# glm으로 변수 장난치기
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+model = glm(purchase ~ gender + log(monetary) + poly(recency,2) + poly(frequency,2), mailorder1, family = 'binomial')
+pred = predict(model, mailorder2, type = 'response')
+
+mailorder2$predict = pred
+
+mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# XG Boosting
+
+```
+
+
+```{r}
+# 로지스틱 회귀분석
+model = glm(purchase~., mailorder1, family = 'binomial')
+pred = predict(model, mailorder2, type = 'response')
+
+mailorder2$predict = pred
+
+mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# ridge regresssion
+library(glmnet)
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+train_x = model.matrix(purchase~., mailorder1)[,-c(1,2)]
+train_y = mailorder1$purchase
+
+test_x = model.matrix(purchase~., mailorder2)[,-c(1,2)]
+test_y = mailorder2$purchase
+
+set.seed(1234)
+cv.out = cv.glmnet(train_x, train_y, alpha=0)
+plot(cv.out)
+cv.out$lambda.min
+
+
+grid = 10^seq(10,-2,length=100)
+model = glmnet(train_x, train_y, alpha = 0, lambda = grid)
+
+pred = predict(model, newx = test_x, s = 0.0083)
+
+test = cbind(data.frame(test_y), data.frame(pred))
+
+test %>% arrange(desc(X1)) %>% head(500) %>% summarise(mean = mean(test_y))
+```
+
+```{r}
+# rasso regresssion
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+train_x = model.matrix(purchase~., mailorder1)[,-c(1,2)]
+train_y = mailorder1$purchase
+
+test_x = model.matrix(purchase~., mailorder2)[,-c(1,2)]
+test_y = mailorder2$purchase
+
+grid = 10^seq(10,-2,length=100)
+lasso.mod=glmnet(train_x, train_y, alpha=1, lambda=grid)
+plot(lasso.mod)
+
+set.seed(1234)
+cv.out=cv.glmnet(train_x, train_y, alpha=1)
+plot(cv.out)
+cv.out$lambda.min
+
+
+grid = 10^seq(10,-2,length=100)
+model = glmnet(train_x, train_y, alpha = 1, lambda = grid)
+
+pred = predict(model, newx = test_x, s = 6.409946e-05)
+
+test = cbind(data.frame(test_y), data.frame(pred))
+
+test %>% arrange(desc(X1)) %>% head(500) %>% summarise(mean = mean(test_y))
+```
+
+```{r}
+# svm
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+model = e1071::svm(purchase ~ monetary + recency + frequency + duration, mailorder1)
+pred = predict(model, mailorder2)
+
+mailorder2$predict = pred
+mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# naiveBayes
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+mailorder3 = mailorder1
+mailorder4 = mailorder2
+
+mailorder3$purchase = as.factor(mailorder3$purchase)
+mailorder4$purchase = as.factor(mailorder4$purchase)
+
+model = e1071::naiveBayes(purchase ~ monetary + recency + frequency + duration, mailorder3)
+pred = predict(model, mailorder4)
+
+mailorder4$predict = pred
+mailorder4$purchase = as.numeric(mailorder4$purchase) - 1
+mailorder4 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# randomForest
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+mailorder3 = mailorder1
+mailorder4 = mailorder2
+
+mailorder3$purchase = as.factor(mailorder3$purchase)
+mailorder4$purchase = as.factor(mailorder4$purchase)
+
+model = randomForest::randomForest(purchase ~ gender + monetary + recency + frequency + duration, mailorder3)
+pred = predict(model, mailorder4)
+
+mailorder4$predict = pred
+mailorder4$purchase = as.numeric(mailorder4$purchase) - 1
+mailorder4 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# 스케일링
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+scale_train = as.data.frame(scale(mailorder1[,-c(1,2,7)]))
+scale = cbind(scale_train, mailorder1[,7])
+colnames(scale)[5] = 'purchase'
+
+scale_test = as.data.frame(scale(mailorder2[,-c(1,2,7)]))
+scale2 = cbind(scale_test, mailorder2[,7])
+colnames(scale2)[5] = 'purchase'
+
+model = lm(purchase~., scale)
+pred = predict(model, scale2)
+
+
+scale2$predict = pred
+scale2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# bootstrap
+mailorder3 = mailorder1 %>% na.omit() %>% select(purchase, recency, frequency, monetary)
+mailorder4 = mailorder2 %>% na.omit() %>% select(purchase, recency, frequency, monetary)
+
+model_fit = lm(purchase ~ ., mailorder3)
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# 회귀분석 ploy + 다른변수 추가
+set.seed(1234)
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+
+train_x = model.matrix(purchase~gender+poly(monetary,2)+poly(recency,2)+poly(frequency,2)+poly(duration,2), mailorder1)[,-1]
+train_y = mailorder1$purchase
+
+test_x = model.matrix(purchase~gender+poly(monetary,2)+poly(recency,2)+poly(frequency,2)+poly(duration,2), mailorder2)[,-1]
+test_y = mailorder2$purchase
+
+set.seed(1234)
+cv.out = cv.glmnet(train_x, train_y, alpha=0)
+plot(cv.out)
+cv.out$lambda.min
+
+
+grid = 10^seq(10,-2,length=100)
+model = glmnet(train_x, train_y, alpha = 0, lambda = grid)
+
+pred = predict(model, newx = test_x, s = cv.out$lambda.min)
+
+test = cbind(data.frame(test_y), data.frame(pred))
+
+test %>% arrange(desc(X1)) %>% head(500) %>% summarise(mean = mean(test_y))
+```
+
+```{r}
+# 회귀분석 ploy
+mailorder3 = mailorder1 %>% select(purchase, recency, frequency, monetary)
+mailorder4 = mailorder2 %>% select(purchase, recency, frequency, monetary)
+
+model = lm(purchase ~ poly(recency,2) + poly(frequency,2) + poly(monetary,2), mailorder3)
+
+pred = predict(model, mailorder4)
+
+mailorder4$predict = pred
+
+mailorder4 %>% arrange(desc(predict)) %>% 
+   head(500) %>% summarise(mean = mean(purchase))
+
+```
+
+```{r}
+# 로지스틱 회귀분석
+mailorder3 = mailorder1 %>% select(purchase, recency, frequency, monetary)
+mailorder4 = mailorder2 %>% select(purchase, recency, frequency, monetary)
+
+model = glm(purchase~., mailorder3, family = 'binomial')
+pred = predict(model, mailorder4, type = 'response')
+
+mailorder4$predict = pred
+
+mailorder4 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# 스케일링
+mailorder3 = mailorder1 %>% select(purchase, recency, frequency, monetary)
+mailorder4 = mailorder2 %>% select(purchase, recency, frequency, monetary)
+
+scale_train = as.data.frame(scale(mailorder3[,-1]))
+scale = cbind(scale_train, mailorder3[,1])
+colnames(scale)[4] = 'purchase'
+
+scale_test = as.data.frame(scale(mailorder4[,-1]))
+scale2 = cbind(scale_test, mailorder4[,1])
+colnames(scale2)[4] = 'purchase'
+
+model = lm(purchase~recency+frequency+monetary, scale)
+pred = predict(model, scale2)
+
+
+scale2$predict = pred
+scale2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# svm
+mailorder3 = mailorder1 %>% select(purchase, recency, frequency, monetary)
+mailorder4 = mailorder2 %>% select(purchase, recency, frequency, monetary)
+
+model = e1071::svm(purchase~., mailorder3)
+pred = predict(model, mailorder4)
+
+mailorder4$predict = pred
+mailorder4 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+
+```{r}
+# nnet 개망했고.
+mailorder3 = data.matrix(mailorder1 %>% select(purchase, recency, frequency, monetary))
+
+# Build nn model
+# first layers
+my_input = mx.symbol.Variable('data')
+fc1 = mx.symbol.FullyConnected(data = my_input, num.hidden = 200, name = 'fc1')
+relu1 = mx.symbol.Activation(data = fc1, act.type = 'relu', name = 'relu1')
+
+# second layers
+fc2 = mx.symbol.FullyConnected(data = relu1, num.hidden = 100, name = 'fc2')
+relu2 = mx.symbol.Activation(data = fc2, act.type = 'relu', name = 'relu2')
+
+# third layers
+fc3 = mx.symbol.FullyConnected(data = relu2, num.hidden = 2, name = 'fc3')
+
+# softmax
+softmax = mx.symbol.SoftmaxOutput(data = fc3, name ='sm')
+
+# training
+device = mx.cpu()
+model = mx.model.FeedForward.create(softmax, optimizer = 'sgd', array.batch.size = 10, num.round = 300,
+                                    learning.rate = 0.1, X = mailorder3[,-1], y = mailorder3[,1], 
+                                    ctx = device,
+                                    eval.metric = mx.metric.accuracy, array.layout = 'rowmajor', 
+                                    epoch.end.callback = mx.callback.log.train.metric(100))
+
+# testing
+mailorder4 = data.matrix(mailorder2 %>% select(purchase, recency, frequency, monetary))
+pred = predict(model, mailorder4[,-1], array.layout = "rowmajor")
+pred_labels = max.col(t(pred)) - 1
+table(mailorder4[,1], pred_labels)
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

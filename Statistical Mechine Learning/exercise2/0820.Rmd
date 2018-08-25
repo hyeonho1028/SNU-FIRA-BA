@@ -1,0 +1,81 @@
+---
+title: "0820_rmarkdown_exercise"
+author: "Hyeonho Lee"
+date: "2018년 8월 20일"
+output: html_document
+---
+
+```{r}
+x=3;y=6;
+x+y
+```
+
+3.2 Example. Plotting
+```{r}
+plot(cars)
+```
+
+#4 Some useful syntax
+_이탤릭체_ or __볼드체__
+<br><br><br>
+#5 Table
+```{r}
+data(iris)
+knitr::kable(iris[1:5, ], caption = 'A caption')
+```
+
+```{r}
+print(iris[1:5,])
+```
+
+
+
+#6 Global Option
+
+output : pdf or html
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+
+#Exercise
+
+##Data import
+```{r}
+Auto <- ISLR::Auto
+```
+
+```{r, echo=FALSE}
+head(Auto)
+```
+
+##Fit the model
+```{r}
+lm.fit <- lm(mpg~horsepower, data=Auto)
+```
+
+##Table
+```{r, echo=FALSE}
+summary = summary(lm.fit)$coef
+knitr::kable(summary, caption = 'Table 1: Summary')
+```
+
+##Plot
+```{r, echo=FALSE}
+plot(Auto$horsepower, Auto$mpg, pch = 16, cex = 0.5)
+abline(lm.fit, col = 'red')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

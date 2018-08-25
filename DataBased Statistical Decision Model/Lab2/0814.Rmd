@@ -1,0 +1,251 @@
+---
+title: "data_based"
+author: "Hyeonho Lee"
+date: "2018년 8월 14일"
+output: html_document
+---
+
+```{r}
+install.packages("mdsr")
+install.packages("babynames")
+library(mdsr)
+library(babynames)
+BabynamesDist <- make_babynames_dist()
+head(BabynamesDist, 2)
+```
+
+```{r}
+joseph <- BabynamesDist %>% filter(name == "Joseph", sex == "M")
+```
+
+```{r}
+name_plot <- ggplot(data = joseph, aes(x = year))
+```
+
+```{r}
+name_plot <- name_plot +
+  geom_bar(stat = "identity", aes(y = count_thousands * alive_prob),
+            fill = "#b2d7e9", colour = "white")
+```
+
+```{r}
+name_plot <- name_plot + geom_line(aes(y = count_thousands), size = 2) 
+```
+
+```{r}
+name_plot <- name_plot +
+  ylab("Number of People (thousands)") + xlab(NULL)
+```
+
+```{r}
+install.packages("Hmisc")
+library(Hmisc) 
+median_yob <-
+  with(joseph, wtd.quantile(year, est_alive_today, probs = 0.5))
+median_yob
+```
+
+```{r}
+name_plot <- name_plot +
+  geom_bar(stat = "identity", colour = "white", fill = "#008fd5",
+           aes(y = ifelse(year == median_yob, est_alive_today / 1000, 0)))
+```
+
+```{r}
+name_plot +
+  ggtitle("Age Distribution of American Boys Named Joseph") +
+  geom_text(x = 1935, y = 40, label = "Number of Josephs\nborn each year") +
+  geom_text(x = 1915, y = 13, label =
+    "Number of Josephs\nborn each year\nestimated to be alive\non 1/1/2014",
+    colour = "#b2d7e9") +
+  geom_text(x = 2003, y = 40,
+    label = "The median\nliving Joseph\nis 37 years old",
+            colour = "darkgray") +
+  geom_curve(x = 1995, xend = 1974, y = 40, yend = 24,
+    arrow = arrow(length = unit(0.3,"cm")), curvature = 0.5) + ylim(0, 42)
+```
+
+```{r}
+Josephine <- filter(BabynamesDist, name == "Josephine" & sex == "F")
+name_plot %+% Josephine
+```
+
+```{r}
+many_names_plot <- name_plot + facet_grid(name ~ sex)
+mnp <- many_names_plot %+% filter(BabynamesDist, name %in%
+  c("Jessie", "Marion", "Jackie"))
+mnp
+```
+
+```{r}
+library(mosaic)
+head(Galton)
+library(mdsr)
+head(MLB_teams, 2)
+```
+
+```{r}
+library(Hmisc)
+library(mdsr)
+library(babynames)
+BabynamesDist <- make_babynames_dist()
+head(BabynamesDist, 2)
+```
+
+```{r}
+com_fem <- BabynamesDist %>%
+  filter(sex == "F") %>% filter(est_alive_today!=0) %>% 
+  group_by(name) %>%
+  summarise(
+    N = n(), est_num_alive = sum(est_alive_today),
+    q1_age = wtd.quantile(age_today, est_alive_today, probs = 0.25),
+    median_age = wtd.quantile(age_today, est_alive_today, probs = 0.5),
+    q3_age = wtd.quantile(age_today, est_alive_today, probs = 0.75)) %>%
+  arrange(desc(est_num_alive)) %>%
+  head(25)
+```
+
+```{r}
+w_plot <- ggplot(
+  data = com_fem, 
+  aes(x = reorder(name, -median_age),  y = median_age)
+  ) + 
+  xlab(NULL) + 
+  ylab("Age (in years)") +
+  ggtitle("Median ages for females with the 25 most common names")
+```
+
+```{r}
+w_plot + 
+  geom_linerange(
+    aes(ymin = q1_age, ymax = q3_age),
+    color = "#f3d478", 
+    size = 5, 
+    alpha = 0.8
+    ) + 
+  geom_point(fill = "#ed3324", colour = "white", size = 4, shape = 21) +
+  coord_flip()
+```
+
+```{r}
+library(dplyr)
+library(babynames)
+head(babynames, 2)
+```
+
+```{r}
+babynames %>%
+  filter(name == "Jackie")
+```
+
+```{r}
+babynames %>%
+  filter(name == "Jackie") %>%
+  group_by(year)
+```
+
+```{r}
+babynames %>%
+  filter(name == "Jackie") %>%
+  group_by(year) %>%
+  summarise(
+    N = n(), 
+    total = sum(n), 
+    boys = sum(ifelse(sex == "M", n, 0)) 
+  )  
+```
+
+```{r}
+#install.packages("Lahman")
+library(Lahman)
+library(dplyr)
+```
+
+```{r}
+manny <- filter(Batting, playerID == "ramirma02")
+```
+
+```{r}
+manny %>% summarise(
+  span = paste(min(yearID), max(yearID), sep = "-"),
+  numYears = n_distinct(yearID), numTeams = n_distinct(teamID),
+  BA = sum(H)/sum(AB), tH = sum(H), tHR = sum(HR), tRBI = sum(RBI)
+  )
+```
+
+```{r}
+Master %>% 
+  filter(nameLast  == "Ramirez" & nameFirst == "Manny") 
+```
+
+```{r}
+Batting   %>%
+  filter(playerID  == "ramirma02") %>%
+  inner_join(Master, by = c("playerID"  = "playerID"))  %>%
+  group_by(yearID) %>%
+  summarise(
+    Age = max(yearID - birthYear), numTeams = n_distinct(teamID),
+    BA = sum(H)/sum(AB), tH = sum(H), tHR = sum(HR), tRBI = sum(RBI)
+  )   %>%
+arrange(yearID) 
+```
+
+```{r}
+mannyBySeason <- Batting %>%
+  filter(playerID == "ramirma02") %>%
+  inner_join(Master, by = c("playerID"  = "playerID")) %>%
+  group_by(yearID) %>%
+  summarise(
+    Age = max(yearID - birthYear), numTeams = n_distinct(teamID),
+    BA = sum(H)/sum(AB), tH = sum(H), tHR = sum(HR), tRBI = sum(RBI),
+    OBP = sum(H + BB + HBP) / sum(AB + BB + SF + HBP),
+    SLG = sum(H + X2B + 2*X3B + 3*HR) / sum(AB)
+  ) %>%
+  mutate(OPS   = OBP + SLG) %>%
+  arrange(desc(OPS))
+mannyBySeason
+```
+
+```{r}
+mlb <- Batting %>%
+  filter(yearID %in% 1993:2011) %>%
+  group_by(yearID) %>%
+  summarise(lgOPS =
+    sum(H + BB + HBP, na.rm = TRUE) / sum(AB + BB + SF + HBP, na.rm = TRUE)  +
+    sum(H + X2B + 2*X3B  + 3*HR,  na.rm = TRUE)  / sum(AB,  na.rm = TRUE))
+```
+
+```{r}
+mannyRatio <- mannyBySeason %>%
+  inner_join(mlb, by = c("yearID" = "yearID")) %>%
+  mutate(OPSplus = OPS / lgOPS) %>%
+  select(yearID, Age, OPS, lgOPS, OPSplus) %>%
+  arrange(desc(OPSplus))
+mannyRatio
+```
+
+```{r}
+mannyAllstar <- AllstarFull %>% filter(playerID == "ramirma02")
+
+mannyBySeason %>% 
+  left_join(mannyAllstar, by = c("yearID" = "yearID")) %>%
+  select(yearID, Age, OPS, GP, startingPos)  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

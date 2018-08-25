@@ -1,0 +1,117 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+
+```{r}
+summary(cars)
+```
+
+To display the output of a code chunk but not the underlying R code, you specify the echo=FALSE option:
+
+```{r, echo=FALSE}
+summary(cars)
+```
+
+Note that R code chunks can also be used to render plots. To display a plot while omitting the code used to generate the plot you??d do this:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+To display R code without evaluating it, you specify the eval=FALSE chunk option:
+
+```{r, eval=FALSE}
+summary(cars)
+```
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+Text formatting
+
+
+
+
+
+
+
+------------------------------------------------------------
+*italic* or _italic_
+**bold** __bold__
+`code`
+superscript^2^ and subscript~2~
+Headings
+
+
+
+
+------------------------------------------------------------
+# 1st Level Header
+## 2nd Level Header
+### 3rd Level Header
+Lists
+
+
+
+------------------------------------------------------------
+* Bulleted list item 1
+* Item 2
+* Item 2a
+* Item 2b
+1. Numbered list item 1
+1. Item 2. The numbers are incremented automatically in the output.
+Links and images
+
+
+
+
+------------------------------------------------------------
+<http://google.com>
+
+[linked phrase](http://google.com)
+
+![optional caption text](C:/tools/Anaconda3/envs/pytorch/Lib/site-packages/matplotlib/mpl-data/sample_data/grace_hopper.jpg)
+
+
+
+
+Tables
+
+
+
+
+------------------------------------------------------------
+First Header | Second Header
+
+
+
+
+
+
+
+
+------------- | -------------
+Content Cell | Content Cell
+Content Cell | Content Cell

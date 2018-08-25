@@ -1,0 +1,62 @@
+---
+title: "Statistic Exercise R Mark Down"
+author: "Hyeonho Lee"
+date: "2018년 8월 1일"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+---
+
+#Exercise
+<br><br><br>
+
+
+###Data import
+```{r}
+Auto <- ISLR::Auto
+```
+```{r, echo=FALSE}
+head(Auto)
+```
+<br><br><br>
+
+
+###Fit the model
+```{r}
+lm.fit <- lm(mpg~horsepower, data=Auto)
+```
+<br><br><br>
+
+
+###Table
+```{r, echo=FALSE}
+knitr::kable(summary(lm.fit)$coef, caption = 'Summary')
+```
+<br><br><br>
+
+
+###Plot
+```{r, echo=FALSE}
+plot(Auto$horsepower, Auto$mpg, pch = 16, cex = 0.5, xlab = 'horsepower', ylab = 'mpg')
+abline(lm.fit, col = 'red')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
