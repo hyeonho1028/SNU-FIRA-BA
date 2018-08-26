@@ -228,10 +228,161 @@ paste0(mailorder2 %>% select(purchase, predict) %>% arrange(desc(predict)) %>% h
 더 좋은 회귀모델을 만들 수 있음을 알 수 있다.
 
 ```{r}
+# 구매여부에 대한 주요변수 4개의 boxplot
+par(mfrow = c(2, 4))
+boxplot(monetary~purchase, mailorder1, xlab = 'purchase', ylab = 'monetary', main = 'estimation sample')
+boxplot(recency~purchase, mailorder1, xlab = 'purchase', ylab = 'recency', main = 'estimation sample')
+boxplot(frequency~purchase, mailorder1, xlab = 'purchase', ylab = 'frequency', main = 'estimation sample')
+boxplot(duration~purchase, mailorder1, xlab = 'purchase', ylab = 'duration', main = 'estimation sample')
 
-
-
+boxplot(monetary~purchase, mailorder2, xlab = 'purchase', ylab = 'monetary', main = 'validation sample')
+boxplot(recency~purchase, mailorder2, xlab = 'purchase', ylab = 'recency', main = 'validation sample')
+boxplot(frequency~purchase, mailorder2, xlab = 'purchase', ylab = 'frequency', main = 'validation sample')
+boxplot(duration~purchase, mailorder2, xlab = 'purchase', ylab = 'duration', main = 'validation sample')
 ```
+duration의 경우 구매여부에 따라 변화가 boxplot의 차이가 거의 없으므로 유의하지 않을 가능성이 크다고
+판단한다.
+
+
+```{r}
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+```
+
+```{r}
+model = lm(purchase ~ gender + poly(monetary,2) + poly(recency,2) + poly(frequency,2), mailorder1)
+# 차이가 있는 3개의 변수와 성별을 넣고, poly함수를 사용하여 변수를 제곱한 것을 추가로 넣어준다.
+model = step(model, direction = 'both')
+knitr::kable(summary(model)$coef, caption = 'A caption')
+# 단계별 회귀를 사용한 후 Coefficients
+
+pred = predict(model, mailorder2)
+mailorder2$predict = pred
+mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+coef를 보고 판단하기에 poly함수는 recency만 적용하는 것이 효율적이라고 판단
+
+
+또한 이 모델의 경우 18.6%의 정확도를 보임
+
+
+```{r}
+model = lm(purchase ~ gender + monetary + poly(recency,2) + frequency, mailorder1)
+# 차이가 있는 3개의 변수와 성별을 넣고, poly함수를 사용하여 변수를 제곱한 것을 추가로 넣어준다.
+
+knitr::kable(summary(model)$coef, caption = 'A caption')
+# Coefficients
+
+pred = predict(model, mailorder2)
+mailorder2$predict = pred
+mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+이 모델의 경우 19%의 정확도를 보인다.
+
+
+다른 분류모형
+```{r}
+model = glm(purchase ~ gender + monetary + poly(recency,2) + frequency, mailorder1, family = 'binomial')
+pred = predict(model, mailorder2, type = 'response')
+mailorder2$predict = pred
+result1 = mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+# 로지스틱 회귀모형
+```
+
+```{r}
+set.seed(1234)
+model = randomForest::randomForest(purchase ~ gender + monetary + recency + frequency, mailorder1,
+                                   ntree = 200)
+pred = predict(model, mailorder2)
+mailorder2$predict = pred
+result2 = mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+# 랜덤포레스트 분류모형(randomForest의 경우 poly함수 사용불가)
+```
+
+```{r}
+model = e1071::svm(purchase ~ gender + monetary + poly(recency,2) + frequency, mailorder1, 
+                   kernel = 'linear', cost = 9)
+pred = predict(model, mailorder2)
+mailorder2$predict = pred
+result3 = mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+# svm모형
+```
+
+
+```{r}
+model = e1071::naiveBayes(as.factor(purchase) ~ gender + monetary + recency + frequency, mailorder1) 
+pred = predict(model, mailorder2)
+mailorder2$predict = varhandle::unfactor(pred)
+result4 = mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+# naiveBayes(poly 사용불가)
+```
+
+```{r}
+result = rbind(result1, result2, result3, result4)
+result = cbind(c('로지스틱회귀', '랜덤포레스트', 'SVM', 'NaiveBayes'), result)
+colnames(result) = c('Model', 'Probability')
+knitr::kable(result, caption = 'A caption')
+```
+
+
+로지스틱 회귀모형이 19.2%로 가장 높은 확률을 보인다. 500명 중 96명이 구매했다는 점을 알 수 있다.
+
+
+성능이 더 좋은 모델을 얻기 위해 데이터를 더 볼 필요성을 느꼈다.
+
+```{r}
+mailorder1 = head(mailorder, 2000)
+mailorder2 = tail(mailorder, 2000)
+```
+
+```{r}
+table(mailorder1$purchase)
+table(mailorder2$purchase)
+```
+
+purchase이 매우 불균형 인 것을 알 수 있다. 이런 불균형 데이터의 경우 처리하는 방법이 여러가지가 있는데,
+그 중 한가지인 Random Over-Sampling을 적용하였다.
+```{r}
+mailorder1_1 = mailorder1 %>% filter(purchase == 0)
+mailorder1_2 = mailorder1 %>% filter(purchase == 1)
+
+mailorder3 = rbind(mailorder1_1,mailorder1_2)
+mailorder3 = rbind(mailorder3,mailorder1_2)
+
+table(mailorder3$purchase)
+```
+purchase을 0과 1인 경우로 나누어 1의 데이터를 2배 over-sampling하여 mailorder3로 bind
+
+
+
+```{r}
+set.seed(488983)
+ind = sample(1:nrow(mailorder3), nrow(mailorder3), replace = F)
+
+mailorder4 = mailorder3[ind <= 721,]
+```
+동일한 결과를 보기위한 seed번호를 설정하고, 비복원 추출로 resampling을 실행
+
+
+
+
+```{r}
+table(mailorder4$purchase)
+model = lm(purchase ~ gender + monetary + recency + frequency, mailorder4)
+pred = predict(model, mailorder2)
+mailorder2$predict = pred
+mailorder2 %>% arrange(desc(predict)) %>% head(500) %>% summarise(mean = mean(purchase))
+```
+resampling한 mailorder4로 회귀분석을 진행한 결과 20%의 정확도를 볼 수 있었다. 즉 500명 중 100명이 
+실제로 구매를 한 이력이 있다는 점을 알 수 있다.
+
+
+이 점을 보아 불균형한 데이터의 경우 높은 예측 모형을 만들기 위해서는 모델선택보다 추가데이터를 수집하거나, 
+기존의 데이터의 가공에 노력을 기울이면 좋은 성능을 기대할 수 있음을 알 수있다.
+
+
+
+
 
 
 
