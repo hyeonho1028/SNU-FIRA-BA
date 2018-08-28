@@ -1,0 +1,161 @@
+---
+title: "homework3"
+author: "Hyeonho Lee"
+date: "2018년 8월 23일"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+header-includes :
+  - \usepackage{kotex}
+---
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyr)
+library(dplyr)
+library(OpenMx)
+library(broom)
+library(ggplot2)
+data(twinData)
+twinData <- as_tibble(twinData)
+```
+
+#  &nbsp;
+
+
+Exercises 8  
+Repeat exercise #3. This time, use the variables cohort, zygosity to facet, and use different colors to indicate the subgroups for which the heights are significantly similar. Comment on your finding.
+
+&nbsp;
+```{r warning=FALSE}
+condition = twinData %>% group_by(cohort,zygosity) %>% 
+  do(tidy( cor.test(~ ht1 + ht2, alternative = "greater" , data = . ))) %>% 
+  select(cohort,zygosity,estimate)
+
+twinData = merge(twinData, condition, by = c('cohort', 'zygosity'))
+
+twinData %>% ggplot(mapping = aes(ht1,ht2,color=estimate)) + 
+  geom_point() + facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
+
+#  
+
+
+Exercises 9  
+Repeat exercise #8, but compare weight this time. You should be able to recycle almost all code chunks.
+
+&nbsp;
+```{r warning=FALSE}
+condition2 = twinData %>% group_by(cohort,zygosity) %>%  
+  do(tidy( cor.test(~ wt1 + wt2, alternative = "greater" , data = . ))) %>% 
+  select(cohort,zygosity,estimate)
+
+twinData = twinData %>% select(-estimate) %>% merge(condition2, by = c('cohort', 'zygosity'))
+
+twinData %>% ggplot(mapping = aes(wt1,wt2,color=estimate)) + 
+  geom_point() + facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
+
+#  &nbsp;  
+
+
+#  &nbsp;  
+
+
+## &nbsp;  
+
+  
+&nbsp;
+
+  
+&nbsp;
+
+
+Exercises 10  
+Recreate the following graphic. This involves transforming twinData into a narrow form using gather(). You might want to take a look at Lecture 7 note for boxplots.
+
+
+&nbsp;
+
+
+```{r}
+twinData_1 = twinData %>% select(ht1, ht2) %>% gather(key = "order", value = "heigth") %>% 
+  cbind(twinData$cohort, twinData$zygosity)
+colnames(twinData_1)[3:4] = c('cohort', 'zygosity')
+
+twinData_1 %>% na.omit() %>% ggplot(mapping = aes(order, heigth)) +
+  geom_boxplot() + facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
+
+
+#  &nbsp;
+
+
+
+
+Exercises 11  
+Inspect the data graphic. Is there any need to adjust the hypothesis (posed in Question #2)?  
+Are the first-born taller than the second-born?
+
+전체 데이터를 보았을 때 상관성이 있어 보였으나, 각 범주로 나누어 비교해 본 결과, DZOS 경우에만 키의 차이를 
+보이는 것을 볼 수 있다.
+
+
+&nbsp;
+
+
+&nbsp;
+
+
+&nbsp;
+
+
+&nbsp;
+
+
+Exercises 12
+
+Use the paired t-test to test whether the first-born’s height is significantly different from the second-born for each subgroup.
+
+
+
+Why do we use the paired t-test, as opposed to using the two-sample t-test?
+```{r}
+twinData_t.test = twinData %>% group_by(cohort, zygosity) %>% 
+  do(tidy(t.test(.$ht1, .$ht2, data=., paired = TRUE)))
+
+knitr::kable(twinData_t.test[,c(1:5,9,10)], caption = 't-test')
+```
+
+
+쌍둥이 이기 때문에 한 집단에 대한 비교로 생각 할 수 있고, 그러므로 paired 비교가 적합하다.
+
+
+&nbsp;
+
+
+&nbsp;
+
+
+Test whether there is a difference with significance level 5%, for each subgroup.
+```{r}
+twinData_t.test = twinData %>% group_by(cohort, zygosity) %>% 
+  do(tidy(t.test(.$ht1, .$ht2, data=., paired = TRUE, conf.level = 0.95)))
+
+knitr::kable(twinData_t.test[,c(1,2,3,7,8)], caption = 'significance level 5%')
+```
+
+
+
+
+Finally, recreate the above graphic with different colors indicating the results of t-tests.
+```{r warning=FALSE}
+twinData_1 = merge(twinData_1, twinData_t.test, by = c('cohort', 'zygosity'))
+
+twinData_1 %>% ggplot(mapping = aes(order, heigth, fill = p.value)) +
+  geom_boxplot() + facet_grid(rows = vars(cohort), cols = vars(zygosity))
+```
