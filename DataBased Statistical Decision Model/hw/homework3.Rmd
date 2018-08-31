@@ -41,6 +41,8 @@ twinData = merge(twinData, condition, by = c('cohort', 'zygosity'))
 twinData %>% ggplot(mapping = aes(ht1,ht2,color=estimate)) + 
   geom_point() + facet_grid(rows = vars(cohort), cols = vars(zygosity))
 ```
+상관계수가 0.5이상은 그룹은 MZFF, MZMM, older, younger, DZMM의 older 5개의 그룹이 있다. 
+나머지 그룹은 0.5미만임을 알 수 있다.
 
 #  
 
@@ -59,7 +61,7 @@ twinData = twinData %>% select(-estimate) %>% merge(condition2, by = c('cohort',
 twinData %>% ggplot(mapping = aes(wt1,wt2,color=estimate)) + 
   geom_point() + facet_grid(rows = vars(cohort), cols = vars(zygosity))
 ```
-
+4개의 그룹만이(MZFF, MZMM) 0.5이상의 상관관계가 있다.
 #  &nbsp;  
 
 
