@@ -1,0 +1,380 @@
+---
+title: "test"
+author: "Hyeonho Lee"
+date: "2018년 9월 9일"
+output: html_document
+---
+
+
+
+#Question 3
+강의 홈에 제공된 'data3.xlsx'에 대하여 다른 변수들을 이용하여 'ideo_self'를 예측하는 모형을 구축 하고자 한다. 본인이 찾은 최적의 예측모형을 서술하고 10-fold cross-validation을 이용한 시험오차(testing error)에 대해 혼동행렬(confusion matrix)을 계산하여라
+```{r}
+dat = read.csv('data3.csv')
+dat = dat[,-c(1,3)]
+for (i in c(1,3:17))
+{
+  dat[,i] = as.factor(dat[,i])
+}
+```
+변수의 성격에 맞게 str을 변환하였다.
+
+```{r}
+aggr(dat[,7:16], prop=FALSE, numbers=TRUE)
+```
+결측치의 개수와 결측치의 패턴을 보기 위해 위의 함수를 사용하였다. 패턴은 없다고 판단하였다. 결측치를 모두 채운 후 ideo_self를 예측하는 모델링을 할 것이기 때문에, 결측치가 가장 적은 K13부터 가장많은 K10순서대로 값을 채울 것을 결정하였다.
+
+
+```{r results=F}
+miceresult <- mice(dat, seed = 123, m = 5)
+
+a=complete(miceresult, 1)
+b=complete(miceresult, 2)
+c=complete(miceresult, 3)
+d=complete(miceresult, 4)
+e=complete(miceresult, 5)
+dat_t=complete(miceresult, 5)
+
+
+for (j in 7:(ncol(a)-1))
+{
+  dat_t[,j] <- unfactor(dat_t[,j])
+  for (i in 1:nrow(a))
+  {
+    dat_t[i,j] = round(mean(unfactor(a[i,j]),unfactor(b[i,j]),unfactor(c[i,j]),
+                            unfactor(d[i,j]),unfactor(e[i,j])))
+  }
+  dat_t[,j] <- as.factor(dat_t[,j])
+}
+
+completedData <- dat_t
+```
+결측치의 값을 처리하기 위해 2가지 방법을 사용하였는데, 그 중 첫번째이다. mice패키지를 사용하여 결측값을 채웠다.
+
+
+```{r}
+miceresult$method
+```
+각각의 변수에 대해 어떤 함수를 사용하여 결측치를 채웠는 지 확인 할 수 있다.
+
+
+```{r}
+Fold_index <- createFolds(1:nrow(completedData), k = 10)
+
+result = c()
+result_acc = c()
+result_flex = c()
+for(k in 1:10){
+  Train <- completedData[-Fold_index[[k]],]
+  Test <- completedData[Fold_index[[k]],]
+
+  out <- randomForest(ideo_self~., data = Train)
+  pred <- predict(out, Test)
+
+  result[[k]] = table(pred, Test$ideo_self)
+  
+  result_acc[[k]] = sum(diag(result[[k]]))/sum(result[[k]])
+  
+  pred_flex <- matrix(result[[k]], 11, 11)
+  acc = rep(0, 11)
+  
+  for(i in 1:ncol(pred_flex))
+  {
+    if(i == 1)
+    {
+      acc[i] <- pred_flex[i,i] + pred_flex[i, i+1]
+    }
+    else if(i == 11)
+    {
+      acc[i] <- pred_flex[i,i] + pred_flex[i, i-1]
+    }
+    else
+    {
+      acc[i] <- pred_flex[i,i] + pred_flex[i, i-1] + pred_flex[i, i+1]
+    }
+  }
+  result_flex[[k]] = sum(acc)/sum(pred_flex)
+}
+
+mean(result_acc)
+mean(result_flex)
+```
+10-fold결과의 평균값
+10-fold결과의 좀더 여유있게 정확도를 보면(예측값의 +-1정도의 여유치) 좀 더 높게 나오는 것을 알 수 있다.
+
+
+```{r include=F}
+rm(list = ls())
+dat = read.csv('data3.csv')
+dat = dat[,-c(1,3)]
+for (i in c(1,3,4,5,6,17))
+{
+  dat[,i] = as.factor(dat[,i])
+}
+```
+
+```{r}
+dat_k13 = dat[,c(1:6,15,length(dat))]
+model = randomForest(as.factor(k13)~., data = na.omit(dat_k13))
+pred = predict(model, newdata = dat_k13[is.na(dat_k13$k13),], type = 'response')
+dat[is.na(dat$k13),]['k13'] = as.integer(as.character(pred))
+dat$k13 = as.factor(dat$k13)
+
+dat_k12 = dat[,c(1:6,14,15,length(dat))]
+model = randomForest(as.factor(k12)~., data = na.omit(dat_k12))
+pred = predict(model, newdata = dat_k12[is.na(dat_k12$k12),], type = 'response')
+dat[is.na(dat$k12),]['k12'] = as.integer(as.character(pred))
+dat$k12 = as.factor(dat$k12)
+
+dat_k14 = dat[,c(1:6,14:length(dat))]
+model = randomForest(as.factor(k14)~., data = na.omit(dat_k14))
+pred = predict(model, newdata = dat_k14[is.na(dat_k14$k14),], type = 'response')
+dat[is.na(dat$k14),]['k14'] = as.integer(as.character(pred))
+dat$k14 = as.factor(dat$k14)
+
+dat_k8 = dat[,c(1:6,12,14:length(dat))]
+model = randomForest(as.factor(k8)~., data = na.omit(dat_k8))
+pred = predict(model, newdata = dat_k8[is.na(dat_k8$k8),], type = 'response')
+dat[is.na(dat$k8),]['k8'] = as.integer(as.character(pred))
+dat$k8 = as.factor(dat$k8)
+
+dat_k6 = dat[,c(1:6,10,12,14:length(dat))]
+model = randomForest(as.factor(k6)~., data = na.omit(dat_k6))
+pred = predict(model, newdata = dat_k6[is.na(dat_k6$k6),], type = 'response')
+dat[is.na(dat$k6),]['k6'] = as.integer(as.character(pred))
+dat$k6 = as.factor(dat$k6)
+
+dat_k3 = dat[,c(1:6,8,10,12,14:length(dat))]
+model = randomForest(as.factor(k3)~., data = na.omit(dat_k3))
+pred = predict(model, newdata = dat_k3[is.na(dat_k3$k3),], type = 'response')
+dat[is.na(dat$k3),]['k3'] = as.integer(as.character(pred))
+dat$k3 = as.factor(dat$k3)
+
+dat_k4 = dat[,c(1:6,8:10,12,14:length(dat))]
+model = randomForest(as.factor(k4)~., data = na.omit(dat_k4))
+pred = predict(model, newdata = dat_k4[is.na(dat_k4$k4),], type = 'response')
+dat[is.na(dat$k4),]['k4'] = as.integer(as.character(pred))
+dat$k4 = as.factor(dat$k4)
+
+dat_k2 = dat[,c(1:10,12,14:length(dat))]
+model = randomForest(as.factor(k2)~., data = na.omit(dat_k2))
+pred = predict(model, newdata = dat_k2[is.na(dat_k2$k2),], type = 'response')
+dat[is.na(dat$k2),]['k2'] = as.integer(as.character(pred))
+dat$k2 = as.factor(dat$k2)
+dat_k7 = dat[,c(1:12,14:length(dat))]
+
+model = randomForest(as.factor(k7)~., data = na.omit(dat_k7))
+pred = predict(model, newdata = dat_k7[is.na(dat_k7$k7),], type = 'response')
+dat[is.na(dat$k7),]['k7'] = as.integer(as.character(pred))
+dat$k7 = as.factor(dat$k7)
+dat_k10 = dat[,c(1:length(dat))]
+
+model = randomForest(as.factor(k10)~., data = na.omit(dat_k10))
+pred = predict(model, newdata = dat_k10[is.na(dat_k10$k10),], type = 'response')
+dat[is.na(dat$k10),]['k10'] = as.integer(as.character(pred))
+dat$k10 = as.factor(dat$k10)
+```
+각각의 결측치를 가장적은 k13부터 가장많은 k10을 randomforest를 사용하여 값을 할당한다.
+
+```{r}
+Fold_index <- createFolds(1:nrow(dat), k = 10)
+Train <- dat[-Fold_index[[1]],]
+Test <- dat[Fold_index[[1]],]
+  
+out <- nnet::multinom(ideo_self~., data = Train[,c(7:17)])
+pred <- predict(out, Test) 
+
+
+  
+
+
+pred_flex <- matrix(table(pred, Test$ideo_self), 11, 11)
+acc = rep(0, 11)
+  
+for(i in 1:ncol(pred_flex))
+{
+  if(i == 1)
+  {
+    acc[i] <- pred_flex[i,i] + pred_flex[i, i+1]
+  }
+  else if(i == 11)
+  {
+    acc[i] <- pred_flex[i,i] + pred_flex[i, i-1]
+  }
+  else
+  {
+    acc[i] <- pred_flex[i,i] + pred_flex[i, i-1] + pred_flex[i, i+1]
+  }
+  result_flex[[i]] = sum(acc)/sum(pred_flex)
+}
+
+sum(diag(table(pred, Test$ideo_self)))/sum(table(pred, Test$ideo_self))
+sum(acc)/sum(pred_flex)
+
+```
+
+
+```{r}
+
+set.seed(1000)
+Fold_index <- createFolds(1:nrow(dat), k = 10)
+
+result = c()
+result_acc = c()
+result_flex = c()
+for(k in 1:10){
+  Train <- dat[-Fold_index[[k]],]
+  Test <- dat[Fold_index[[k]],]
+
+  out <- randomForest::randomForest(ideo_self~., data = Train[,c(4:17)])
+  pred <- predict(out, Test)
+
+  result[[k]] = table(pred, Test$ideo_self)
+  
+  result_acc[[k]] = sum(diag(result[[k]]))/sum(result[[k]])
+  
+  pred_flex <- matrix(result[[k]], 11, 11)
+  
+  acc = rep(0, 11)
+  
+  for(i in 1:ncol(pred_flex))
+  {
+    if(i == 1)
+    {
+      acc[i] <- pred_flex[i,i] + pred_flex[i, i+1]
+    }
+    else if(i == 11)
+    {
+      acc[i] <- pred_flex[i,i] + pred_flex[i, i-1]
+    }
+    else
+    {
+      acc[i] <- pred_flex[i,i] + pred_flex[i, i-1] + pred_flex[i, i+1]
+    }
+  }
+  result_flex[[k]] = sum(acc)/sum(pred_flex)
+}
+
+mean(result_acc)
+mean(result_flex)
+```
+10-fold결과의 평균값
+10-fold결과의 좀더 여유있게 정확도를 보면(예측값의 +-1정도의 여유치) 좀 더 높게 나오는 것을 알 수 있다.
+
+
+결과론적으로 mice함수를 사용한 결과보다, 직접적인 모델을 만들어서 결측치를 채운결과가 정확도가 더 높음을 알 수 있다.
+
+
+```{r include=F}
+for (i in 1000:1010)
+{
+  set.seed(i)
+  rm(list = ls())
+  dat = read.csv('data3.csv')
+  dat = dat[,-c(1,3)]
+  for (i in c(1,3,4,5,6,17))
+  {
+    dat[,i] = as.factor(dat[,i])
+  }
+  dat_k13 = dat[,c(1:6,15,length(dat))]
+  model = randomForest(as.factor(k13)~., data = na.omit(dat_k13))
+  pred = predict(model, newdata = dat_k13[is.na(dat_k13$k13),], type = 'response')
+  dat[is.na(dat$k13),]['k13'] = as.integer(as.character(pred))
+  dat$k13 = as.factor(dat$k13)
+  
+  dat_k12 = dat[,c(1:6,14,15,length(dat))]
+  model = randomForest(as.factor(k12)~., data = na.omit(dat_k12))
+  pred = predict(model, newdata = dat_k12[is.na(dat_k12$k12),], type = 'response')
+  dat[is.na(dat$k12),]['k12'] = as.integer(as.character(pred))
+  dat$k12 = as.factor(dat$k12)
+  
+  dat_k14 = dat[,c(1:6,14:length(dat))]
+  model = randomForest(as.factor(k14)~., data = na.omit(dat_k14))
+  pred = predict(model, newdata = dat_k14[is.na(dat_k14$k14),], type = 'response')
+  dat[is.na(dat$k14),]['k14'] = as.integer(as.character(pred))
+  dat$k14 = as.factor(dat$k14)
+  
+  dat_k8 = dat[,c(1:6,12,14:length(dat))]
+  model = randomForest(as.factor(k8)~., data = na.omit(dat_k8))
+  pred = predict(model, newdata = dat_k8[is.na(dat_k8$k8),], type = 'response')
+  dat[is.na(dat$k8),]['k8'] = as.integer(as.character(pred))
+  dat$k8 = as.factor(dat$k8)
+  
+  dat_k6 = dat[,c(1:6,10,12,14:length(dat))]
+  model = randomForest(as.factor(k6)~., data = na.omit(dat_k6))
+  pred = predict(model, newdata = dat_k6[is.na(dat_k6$k6),], type = 'response')
+  dat[is.na(dat$k6),]['k6'] = as.integer(as.character(pred))
+  dat$k6 = as.factor(dat$k6)
+  
+  dat_k3 = dat[,c(1:6,8,10,12,14:length(dat))]
+  model = randomForest(as.factor(k3)~., data = na.omit(dat_k3))
+  pred = predict(model, newdata = dat_k3[is.na(dat_k3$k3),], type = 'response')
+  dat[is.na(dat$k3),]['k3'] = as.integer(as.character(pred))
+  dat$k3 = as.factor(dat$k3)
+  
+  dat_k4 = dat[,c(1:6,8:10,12,14:length(dat))]
+  model = randomForest(as.factor(k4)~., data = na.omit(dat_k4))
+  pred = predict(model, newdata = dat_k4[is.na(dat_k4$k4),], type = 'response')
+  dat[is.na(dat$k4),]['k4'] = as.integer(as.character(pred))
+  dat$k4 = as.factor(dat$k4)
+  
+  dat_k2 = dat[,c(1:10,12,14:length(dat))]
+  model = randomForest(as.factor(k2)~., data = na.omit(dat_k2))
+  pred = predict(model, newdata = dat_k2[is.na(dat_k2$k2),], type = 'response')
+  dat[is.na(dat$k2),]['k2'] = as.integer(as.character(pred))
+  dat$k2 = as.factor(dat$k2)
+  dat_k7 = dat[,c(1:12,14:length(dat))]
+  
+  model = randomForest(as.factor(k7)~., data = na.omit(dat_k7))
+  pred = predict(model, newdata = dat_k7[is.na(dat_k7$k7),], type = 'response')
+  dat[is.na(dat$k7),]['k7'] = as.integer(as.character(pred))
+  dat$k7 = as.factor(dat$k7)
+  dat_k10 = dat[,c(1:length(dat))]
+  
+  model = randomForest(as.factor(k10)~., data = na.omit(dat_k10))
+  pred = predict(model, newdata = dat_k10[is.na(dat_k10$k10),], type = 'response')
+  dat[is.na(dat$k10),]['k10'] = as.integer(as.character(pred))
+  dat$k10 = as.factor(dat$k10)
+  Fold_index <- createFolds(1:nrow(dat), k = 10)
+  
+  result = c()
+  result_acc = c()
+  result_flex = c()
+  for(k in 1:10){
+    Train <- dat[-Fold_index[[k]],]
+    Test <- dat[Fold_index[[k]],]
+  
+    out <- randomForest(ideo_self~., data = Train)
+    pred <- predict(out, Test)
+  
+    result[[k]] = table(pred, Test$ideo_self)
+    
+    result_acc[[k]] = sum(diag(result[[k]]))/sum(result[[k]])
+    
+    pred_flex <- matrix(result[[k]], 11, 11)
+    
+    acc = rep(0, 11)
+    
+    for(i in 1:ncol(pred_flex))
+    {
+      if(i == 1)
+      {
+        acc[i] <- pred_flex[i,i] + pred_flex[i, i+1]
+      }
+      else if(i == 11)
+      {
+        acc[i] <- pred_flex[i,i] + pred_flex[i, i-1]
+      }
+      else
+      {
+        acc[i] <- pred_flex[i,i] + pred_flex[i, i-1] + pred_flex[i, i+1]
+      }
+    }
+    result_flex[[k]] = sum(acc)/sum(pred_flex)
+  }
+  
+  mean(result_acc)
+  mean(result_flex)
+}
+```
+

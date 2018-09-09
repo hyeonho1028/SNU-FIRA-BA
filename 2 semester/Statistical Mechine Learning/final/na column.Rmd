@@ -1,0 +1,131 @@
+---
+title: "na_model"
+author: "Hyeonho Lee"
+date: "2018년 9월 8일"
+output: html_document
+---
+
+
+```{r}
+library(randomForest)
+```
+
+```{r}
+dat_k13 = dat[,c(1:6,15,length(dat))]
+
+model = randomForest(as.factor(k13)~., data = na.omit(dat_k13))
+
+pred = predict(model, newdata = dat_k13[is.na(dat_k13$k13),], type = 'response')
+
+dat[is.na(dat$k13),]['k13'] = as.integer(as.character(pred))
+
+dat$k13 = as.factor(dat$k13)
+```
+
+```{r}
+dat_k12 = dat[,c(1:6,14,15,length(dat))]
+
+model = randomForest(as.factor(k12)~., data = na.omit(dat_k12))
+
+pred = predict(model, newdata = dat_k12[is.na(dat_k12$k12),], type = 'response')
+
+dat[is.na(dat$k12),]['k12'] = as.integer(as.character(pred))
+
+dat$k12 = as.factor(dat$k12)
+```
+
+```{r}
+dat_k14 = dat[,c(1:6,14:length(dat))]
+
+model = randomForest(as.factor(k14)~., data = na.omit(dat_k14))
+
+pred = predict(model, newdata = dat_k14[is.na(dat_k14$k14),], type = 'response')
+
+dat[is.na(dat$k14),]['k14'] = as.integer(as.character(pred))
+
+dat$k14 = as.factor(dat$k14)
+```
+
+```{r}
+dat_k8 = dat[,c(1:6,12,14:length(dat))]
+
+model = randomForest(as.factor(k8)~., data = na.omit(dat_k8))
+
+pred = predict(model, newdata = dat_k8[is.na(dat_k8$k8),], type = 'response')
+
+dat[is.na(dat$k8),]['k8'] = as.integer(as.character(pred))
+
+dat$k8 = as.factor(dat$k8)
+```
+
+```{r}
+dat_k6 = dat[,c(1:6,10,12,14:length(dat))]
+
+model = randomForest(as.factor(k6)~., data = na.omit(dat_k6))
+
+pred = predict(model, newdata = dat_k6[is.na(dat_k6$k6),], type = 'response')
+
+dat[is.na(dat$k6),]['k6'] = as.integer(as.character(pred))
+
+dat$k6 = as.factor(dat$k6)
+```
+
+```{r}
+dat_k3 = dat[,c(1:6,8,10,12,14:length(dat))]
+
+model = randomForest(as.factor(k3)~., data = na.omit(dat_k3))
+
+pred = predict(model, newdata = dat_k3[is.na(dat_k3$k3),], type = 'response')
+
+dat[is.na(dat$k3),]['k3'] = as.integer(as.character(pred))
+
+dat$k3 = as.factor(dat$k3)
+```
+
+```{r}
+dat_k4 = dat[,c(1:6,8:10,12,14:length(dat))]
+
+model = randomForest(as.factor(k4)~., data = na.omit(dat_k4))
+
+pred = predict(model, newdata = dat_k4[is.na(dat_k4$k4),], type = 'response')
+
+dat[is.na(dat$k4),]['k4'] = as.integer(as.character(pred))
+
+dat$k4 = as.factor(dat$k4)
+```
+
+```{r}
+dat_k2 = dat[,c(1:10,12,14:length(dat))]
+
+model = randomForest(as.factor(k2)~., data = na.omit(dat_k2))
+
+pred = predict(model, newdata = dat_k2[is.na(dat_k2$k2),], type = 'response')
+
+dat[is.na(dat$k2),]['k2'] = as.integer(as.character(pred))
+
+dat$k2 = as.factor(dat$k2)
+```
+
+```{r}
+dat_k7 = dat[,c(1:12,14:length(dat))]
+
+model = randomForest(as.factor(k7)~., data = na.omit(dat_k7))
+
+pred = predict(model, newdata = dat_k7[is.na(dat_k7$k7),], type = 'response')
+
+dat[is.na(dat$k7),]['k7'] = as.integer(as.character(pred))
+
+dat$k7 = as.factor(dat$k7)
+```
+
+```{r}
+dat_k10 = dat[,c(1:length(dat))]
+
+model = randomForest(as.factor(k10)~., data = na.omit(dat_k10))
+
+pred = predict(model, newdata = dat_k10[is.na(dat_k10$k10),], type = 'response')
+
+dat[is.na(dat$k10),]['k10'] = as.integer(as.character(pred))
+
+dat$k10 = as.factor(dat$k10)
+```

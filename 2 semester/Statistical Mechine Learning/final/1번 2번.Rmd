@@ -1,0 +1,146 @@
+---
+title: "magic"
+author: "Hyeonho Lee"
+date: "2018년 9월 9일"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+header-includes :
+  - \usepackage{kotex}
+---
+
+#Question 1
+It is well-known that ridge regression tends to give similar coeffcient values to correlated variables, whereas the lasso may give quite different coefficient values to correlated vari-ables. We will now explore this property in a very simple setting.
+
+Suppose that $\ n = 2, p = 2, x_{11} = x_{12}, x_{21} = x_{22}$ Furthermore, suppose that $\ y_1 + y_2 = 0$ and $\ x_{11} + x_{21} = 0$ and $\ x_{12} + x_{22} = 0$, so that the estimate for the intercept in a least squares, ridge regression, or lasso model is zero: $\ \hat\beta_0$.
+
+###
+
+
+1. Write out the ridge regression optimiztion problem in this setting.
+
+
+$\ Answer:$
+
+A general form of Ridge regression optimization looks like :
+
+
+$\sum_{i=1}^{n}(y_{i}-\hat{\beta_{0}}-\sum_{j=1}^{p}\hat{\beta_{j}}x_{j}^2+\lambda\sum_{i=1}^p\hat{\beta_{j}^2}$
+
+In this case, $\hat{\beta_{0}} = 0$ and $n = p = 2$.
+
+So, the optimization looks like
+$Minimize : (y_{1}-\hat\beta_{1}x_{11}-\hat\beta_{2}x_{12})^2 + (y_{2}-\hat\beta_1x_{22})^2+\lambda(\hat\beta_{1}^2+\hat\beta_{2}^2)$
+
+###
+
+
+2. Argue that in this setting, the ridge coefficient estimates satisfy $\ \hat\beta_1 = \hat\beta_2$
+
+$\ Answer :$
+
+Argue that in this setting, the ridge coefficient estimates satisfy $\hat\beta_{1} = \hat\beta_{2}$.
+Given the situations that $x_{11} = x_{12} = x_{1}, x_{21} = x_{22} = x_{2}$, take the derivatives of the expression in (a) with respect to both $\hat\beta_{1}$ and $\hat\beta_{2}$ and setting them equal zero, then we get
+
+${\hat\beta_{1}^*} = \frac{x_{1}y_{1}+x_{2}y_{2} - \hat\beta_{2}^*(x_{1}^2+x_{2}^2)}{\lambda + x_{1}^2 + x_{2}^2}$
+
+
+${\hat\beta_{2}^*} = \frac{x_{1}y_{1}+x_{2}y_{2} - \hat\beta_{1}^*(x_{1}^2+x_{2}^2)}{\lambda + x_{1}^2 + x_{2}^2}$
+
+The symmetry form in the above formula suggests that $\hat\beta_1 = \hat\beta_2$
+
+###
+
+
+3. Write ou the lasso optimization problem in this setting.
+
+$\ Answer :$
+
+
+The optimization looks like
+
+$Minimize : (y_{1} - \hat\beta_{1}x_{11}-\hat\beta_{2}x_{12})^2 + (y_{2}-\hat\beta_{1}x_{21}-\hat\beta_{2}x_{22})^2+\lambda(|\hat\beta_{1}|+{\hat\beta_{2}})$
+
+###
+
+
+4. Argue that in this setting, the lasso coefficients $\ \hat\beta_1$ and $\ \hat\beta_2$ are not unique-in other wores, there are man possible solutions to the optimization problem in 3. Describe these solutions.
+
+
+$\ Answer :$ The Lasso contraint takes the form $\ |\hat\beta_1| + |\hat\beta_2| < s$ which plotted takes the shape of a diamond centered at origin (0,0). Next consider the sdquared optimization constrain $\ (y_1 - \hat\beta_1x_{11} - \hat\beta_2x_{12})^2 + (y_2 - \hat\beta_1x_{21} - \hat\beta_2x_{22})^2$. We use the facts $\ x_{11} = x_{12}$, $\ x_{21} = x_{22}$, $\ x_{11} + x_{21} = 0$, $\ x_{12} + x_{22} = 0$, and $\ y_{1} + y_{2} = 0$ to simlify is to minimize: $\ 2(y_1 - (\hat\beta_1 + \hat\beta_2)x_{11})^2$. 
+
+This optimization problem has a simple solution: $\ \hat\beta_1 + \hat\beta_2 = \frac{y_1}{x_{11}}$. this is a line parallel to the edge of Lasso-diamond $\ \hat\beta_1 + \hat\beta_2 = s$. Now the soluitions to the original Lasso optimization problem are contours of the function $\ (y_1 - (\hat\beta_1 + \hat\beta_2)x_{11})^2$ that touch the Lasso-diamond $\ \hat\beta_1 + \hat\beta_2 = s$. Finally, as $\ \hat\beta_1$ and $\ \hat\beta_2$ vary along the line $\ \hat\beta_1 + \hat\beta_2 = \frac{y_1}{x_{11}}$, these coniours touch the Lasso-diamond edge $\ \hat\beta_1 + \hat\beta_2 = s$ at different points. As a result, the enrire edge $\ \hat\beta_1 + \hat\beta_2 = s$ isd a potential solution to the Lasso optimization problem!
+
+Similar argument can be made for the opposite Lasso-diamond edge: $\ \hat\beta_1 + \hat\beta_2 = -s$.
+
+Thus, the Lasso problem does not have a unique solution. The general form of solution is
+
+$\ \hat\beta_1 +\hat\beta_2 = s;\hat\beta_1 \ge 0;\hat\beta_2 \ge 0;$ and $\ \hat\beta_1+\hat\beta_2 =  -s;\hat\beta_1\le0;\hat\beta_2\le0$.
+
+###
+
+
+#Question 2
+
+
+Suppose we have a data set with five predictors, $\ X1 = GPA$, $\ X2 = IQ$, $\ X3 = Gender$ (1 for Female and 0 for Male), $\ X4$ = Interaction between $\ GPA$ and $\ IQ$, and $\ X5$ = Interaction between $\ GPA$ and $\ Gender$. The response is starting salary after graduation (in thousands of dollars). Suppose we use least squares to fit the model, and get $\ \hat\beta_0 = 50$, $\ \hat\beta_1 = 20$, $\ \hat\beta_3 = 35$, $\ \hat\beta_4 = 0.01$, $\ \hat\beta_5$
+
+###
+
+
+1. Which answer is correct, and why?
+
+
+a. For a fixed value of $\ IQ$ and $\ GPA$, males earn more on average than females.
+b. For a fixed value of $\ IQ$ and $\ GPA$, females earn more on average than males.
+c. For a fixed value of $\ IQ$ and $\ GPA$, males earn more on average than females provided that the GPA is high enough.
+d. For a fixed value of $\ IQ$ and $\ GPA$, females earn more on average than males provided that the GPA is high enough.
+
+###
+
+
+c. For a fixed value of $\ IQ$ and $\ GPA$, males earn more on average than females provided that the GPA is high enough.
+
+
+The least squares regression line is :
+
+
+$\ Y = 50 + 20GPA + 0.07IQ + 35Gender + 0.01(GPA * IQ) - 10(GPA * Gender)$
+
+
+$\ (35 - 10GPA)Gender$
+
+
+If Male = 0 is our baseline, we find that males with a $\ GPA$ higher than 3.5 will earn more on average than females.
+
+###
+
+
+2. Predict the salary of a female with $\ IQ$ of 110 and a $\ GPA$ of 4.0.
+
+
+$\ Y = 50 + 20(4) + 0.07(110) + 35(1) + 0.01(4 \times 110) - 10(4 \times 1) = 137.1$
+
+
+The predicted salary would be $137,100.
+
+###
+
+
+3. True or false: Since the coefficient for the $\ GPA/IQ$ interaction term is very small, there is very little evidence of an interaction effect. Justify your answer.
+
+
+False - The size of the coefficient for the interaction term does not necessarily imply little evidence of an interatcion effect. The p value will help us determine significance of the term in the model, and the size of the coefficients of th $\ GPA$ and $\ IQ$ main effects will give us a relative scale of which we will see the actual effects of the interaction.
+
+
+
+
+
+
+
+
+

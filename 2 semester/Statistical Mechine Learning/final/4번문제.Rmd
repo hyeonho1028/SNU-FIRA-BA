@@ -1,0 +1,173 @@
+---
+title: "4번문제"
+author: "Hyeonho Lee"
+date: "2018년 9월 9일"
+output: html_document
+---
+```{r}
+library(e1071)
+library(randomForest)
+library(caret)
+```
+
+
+
+```{r}
+dat = read.csv('data4.csv')
+```
+
+```{r}
+dat
+```
+
+
+
+```{r}
+dat$V1 = as.factor(dat$V1)
+
+ind = sample(nrow(dat), nrow(dat)*0.9, replace = F)
+
+train = dat[ind,]
+test = dat[-ind,]
+
+
+# model = glm(V1~., data = train, family = 'binomial')
+model = randomForest(V1~V2+V3, data = train)
+pred = predict(model, newdata = test)
+
+
+table(test$V1, pred)
+```
+
+```{r}
+result = list()
+result_acc = 0
+Fold_index <- createFolds(1:nrow(dat), k = 10)
+
+for(k in 1:10){
+  Train <- dat[-Fold_index[[k]],]
+  Test <- dat[Fold_index[[k]],]
+
+  out <- randomForest(V1~V2+V3, data = Train)
+  pred <- predict(out, Test)
+  
+  result[[k]] = table(Test$V1, pred)
+  result_acc[k] = sum(diag(result[[k]]))/sum(result[[k]])
+}
+
+result_acc
+mean(result_acc)
+```
+
+
+#군집분석
+```{r}
+dat = read.csv('data4.csv')
+
+dat1 = dat[,c(2:3)]
+d <- dist(dat1, method="euclidean")
+fit <- hclust(d, method="ward.D")
+sum(cutree(fit, k=2) - 1 == dat[,1])/length(dat[,1])
+```
+
+```{r}
+plot(fit)
+rect.hclust(fit, k=2, border = 'red')
+```
+
+```{r}
+sum(cutree(fit, k=2) - 1 == dat[,1])/length(dat[,1])
+```
+
+
+
+```{r}
+# install.packages("philentropy")
+# library(philentropy)
+# getDistMethods()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  [1] "euclidean"         "manhattan"         "minkowski"         "chebyshev"         "sorensen"          "gower"            
+#  [7] "soergel"           "kulczynski_d"      "canberra"          "lorentzian"        "intersection"      "non-intersection" 
+# [13] "wavehedges"        "czekanowski"       "motyka"            "kulczynski_s"      "tanimoto"          "ruzicka"          
+# [19] "inner_product"     "harmonic_mean"     "cosine"            "hassebrook"        "jaccard"           "dice"             
+# [25] "fidelity"          "bhattacharyya"     "hellinger"         "matusita"          "squared_chord"     "squared_euclidean"
+# [31] "pearson"           "neyman"            "squared_chi"       "prob_symm"         "divergence"        "clark"            
+# [37] "additive_symm"     "kullback-leibler"  "jeffreys"          "k_divergence"      "topsoe"            "jensen-shannon"   
+# [43] "jensen_difference" "taneja"            "kumar-johnson"     "avg"   
+
+
+for (i in 2:50)
+{
+  for(j in (i+1):51){
+    
+    dat1 = dat[,c(i,j)]
+      
+    d <- dist(dat1, method='euclidean')
+    fit <- hclust(d, method="single")
+    
+    a = sum(cutree(fit, k=2) - 1 == dat[,1])/length(dat[,1])  
+      
+    if (a>0.59)
+    {
+      print(i)
+      print(j)
+    }
+  }  
+}
+
+
+
+
+```
+
+
+
+
+
+
+```{r}
+dat1 = dat[,c(2,3)]
+
+d <- dist(dat1, method='euclidean')
+fit <- hclust(d, method="single")
+
+a = sum(cutree(fit, k=2) - 1 == dat[,1])/length(dat[,1]) 
+a
+plot(fit)
+rect.hclust(fit, k=2, border = 'red')
+```
+
+
+```{r}
+d <- dist(dat1, method='euclidean')
+km = kmeans(d, 2, nstart = 10)
+```
+
+```{r}
+km$cluster
+```
+
+
+
+
+
+
+
+
+
+
+
+
