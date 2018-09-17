@@ -4,7 +4,7 @@ rm(list=ls());gc()
 #--- 자료 전처리
 
 ## buytest data
-setwd("D:/Dropbox/조교자료/고용노동부_추천_201809/실습")
+setwd("C:/workspace/Github/snu_edu/3 semester/고급 빅데이터 분석/ch3_lab")
 buytest = read.table("buytest.txt", header = T)
 dim(buytest)
 summary(buytest)
@@ -29,8 +29,7 @@ logit
 
 # 자료 분할(train, test set)
 set.seed(1)
-train_ind = sample(1:nrow(buydata), size = floor(nrow(buydata)*0.7), 
-                   replace = F)
+train_ind = sample(1:nrow(buydata), size = floor(nrow(buydata)*0.7), replace = F)
 train = as.data.frame(buydata[train_ind,])
 test = as.data.frame(buydata[-train_ind,])
 X_train = buydata[train_ind, -1]
@@ -271,4 +270,4 @@ matrix(t(sapply(1:4, function(i) cutoff_res(beta_hat[,i], X_test,
 matrix(t(sapply(1:4, function(i) cutoff_res(beta_hat[,i], X_test, 
                                             y_test, cut_sel[i, 3])[[1]])), nrow = 4,
        dimnames =list(model_names, c("cutoff","error rate","sensitivity","specificity","f1 score")))
-
+ 
