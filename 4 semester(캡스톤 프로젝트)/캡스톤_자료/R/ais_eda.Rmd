@@ -1,0 +1,115 @@
+---
+title: "AIS_EDA"
+author: "Hyeonho Lee"
+date: "2018년 9월 18일"
+output: html_document
+---
+
+```{r}
+dat = read.csv('C:/workspace/Github/snu_edu/4 semester(캡스톤 프로젝트)/캡스톤_자료/data/dat(AIS).csv',
+               stringsAsFactors = F)
+```
+
+```{r}
+str(dat)
+ship = dat[dat$ship_id_mmsi==215453000,]
+ship
+```
+
+
+```{r}
+library(maps)
+library(ggmap)
+```
+
+```{r}
+plot.map<- function(database,center,...){
+    Obj <- map(database,...,plot=F)
+    coord <- cbind(Obj[[1]],Obj[[2]])
+
+    # split up the coordinates
+    id <- rle(!is.na(coord[,1]))
+    id <- matrix(c(1,cumsum(id$lengths)),ncol=2,byrow=T)
+    polygons <- apply(id,1,function(i){coord[i[1]:i[2],]})
+
+    # split up polygons that differ too much
+    polygons <- lapply(polygons,function(x){
+        x[,1] <- x[,1] + center
+        x[,1] <- ifelse(x[,1]>180,x[,1]-360,x[,1])
+        if(sum(diff(x[,1])>300,na.rm=T) >0){
+          id <- x[,1] < 0
+          x <- rbind(x[id,],c(NA,NA),x[!id,])
+       }
+       x
+    })
+    # reconstruct the object
+    polygons <- do.call(rbind,polygons)
+    Obj[[1]] <- polygons[,1]
+    Obj[[2]] <- polygons[,2]
+
+    map(Obj,...)
+}
+```
+
+```{r}
+plot.map("world", center=200, col="white",bg="gray",fill=TRUE,ylim=c(-60,90), mar=c(0,0,0,0))
+points(-180, 30, col="red", pch=16, cex = 1)
+```
+
+```{r}
+map("world", center=200, col="white",bg="gray",fill=TRUE,ylim=c(-60,90), mar=c(0,0,0,0))
+points(-176.8734, 30.07250, col="red", pch=16, cex = 1)
+```
+
+```{r}
+api_key <- 'AIzaSyDW4LjcRQ2TcAuYcay7KntR7OvJsjBZSZA'
+```
+
+```{r}
+bs <- get_map(location = "Bering Sea", zoom = 4, api_key = api_key)
+#Figure 1: A map of the Bering Sea, pulled directly from Google Maps via ggmap
+ggmap(bs)
+```
+
+```{r}
+bs1<-get_map(location = c(-175,30), zoom = 3)
+ggmap(bs1)
+
+#Next add points to the map.
+locs<-data.frame(long = ship$longitude.degrees_east.,lat = ship$latitude.degrees_north.)
+
+#Figure 2: A slightly zoomed in map of the Bering Sea, centered on specic coordinate
+#locations.
+ggmap(bs1)+geom_point(data=locs,aes(long,lat), size=1, color='red')
+```
+
+```{r}
+ship = dat[dat$ship_id_mmsi==305676000,]
+locs<-data.frame(long = ship$longitude.degrees_east.,lat = ship$latitude.degrees_north., ship = dat$ship_id_mmsi)
+ggmap(bs1)+geom_point(data=locs,aes(long,lat,fill=as.factor(ship)), size=1, color='red')
+```
+
+```{r}
+ship = dat[dat$ship_id_mmsi==305676000,]
+locs<-data.frame(long = ship$longitude.degrees_east.,lat = ship$latitude.degrees_north.)
+ggmap(bs1)+geom_point(data=locs,aes(long,lat), size=1, color='red')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

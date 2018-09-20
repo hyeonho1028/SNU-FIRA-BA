@@ -1,0 +1,303 @@
+---
+title: "MarketingAnalyticsHomeworks1"
+author: "Hyeonho Lee"
+date: "2018년 9월 19일"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+header-includes :
+  - \usepackage{kotex}
+---
+
+```{r include=F}
+knitr::opts_chunk$set(message=F,warning=F)
+```
+
+DemandSimulation.r
+```{r include=F}
+# Simulate a data set for regression illustratoin
+
+# true model logQ is funciton of logP, dummy1, dummy2,  a quality
+
+set.seed(0)
+
+####
+#### data generation
+####
+
+n = 100  # number of observation
+trueB = c(3,-3, 1.5, 0.7, 3)
+err = rnorm(n,sd=3)  # error term simulation
+
+u1 = runif(n)
+u2 = runif(n)
+u3 = runif(n)
+u4 = runif(n)
+
+logPr = u1 +  u2
+quality = u3 + u2
+dummy1 = (u4> 0.7)*1.0
+dummy2 = ((u4<0.7)&(u4>0.3))*1.0
+
+logQ= trueB[1] + trueB[2]*logPr + trueB[3]*dummy1 + trueB[4]*dummy2 + trueB[5]*quality + err
+
+summary(cbind(logQ,logPr, dummy1, dummy2,quality))
+```
+
+```{r include=F}
+####
+#### plotting 
+####
+par(mfrow=c(2,2))
+plot(x=logPr, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. log(Price)",
+     xlab="log(Price)", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(logPr),col="dark blue",lty="dotted")
+
+plot(x=dummy1, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. Yellow Dummy",
+     xlab="Yellow Dummy", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(dummy1),col="dark blue",lty="dotted")
+
+plot(x=dummy2, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. Green Dummy",
+     xlab="Green  Dummy", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(dummy2),col="dark blue",lty="dotted")
+
+plot(x=quality, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. Quality Index",
+     xlab="Quality Index", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(quality),col="dark blue",lty="dotted")
+```
+
+```{r include=F}
+####
+#### correlation matrix
+####
+
+corrout = cor(cbind(logQ,logPr, dummy1, dummy2,quality))
+print(round(corrout,digits=4))
+
+####
+#### regression output
+####
+
+regout_full = lm(logQ ~ logPr+dummy1+dummy2+quality)
+print(summary(regout_full))
+
+regout_short = lm(logQ ~ logPr+dummy1+dummy2)
+print(summary(regout_short))
+```
+
+
+“DemandSimulation.r.txt” 파일을 다운로드하여 내용을 확인한후, 관측치를 5,000개로 하는 동일한 시뮬레이션을 수행하되, 단 시뮬레이션 시드를 주어진 코드대로 하지 않고 본인의 학번 뒤의 5자리 숫자를 set.seed() 함수 안의 argument로 하여 시뮬레이션 시드를 조정할 것. (예. 학번이 2014-56789 인 경우 set.seed(56789)로 하여 시드를 조정)
+
+##seed 번호(26 고정)
+```{r}
+set.seed(26)
+
+n = 5000
+trueB = c(3,-3, 1.5, 0.7, 3)
+err = rnorm(n,sd=3)
+
+u1 = runif(n)
+u2 = runif(n)
+u3 = runif(n)
+u4 = runif(n)
+
+logPr = u1 +  u2
+quality = u3 + u2
+dummy1 = (u4> 0.7)*1.0
+dummy2 = ((u4<0.7)&(u4>0.3))*1.0
+
+logQ= trueB[1] + trueB[2]*logPr + trueB[3]*dummy1 + trueB[4]*dummy2 + trueB[5]*quality + err
+```
+
+
+##1.	품질과 가격간의 상관관계가 있는 현재의 모형에서
+
+###-	종속변수와 4개의 독립변수 각각과의 scatter plot
+
+###-	품질(Quality)이 포함된 모형과 그렇지 않은 모형간의 회귀 결과 비교 (특히 가격 계수를 중심으로)
+```{r}
+par(mfrow=c(2,2))
+plot(x=logPr, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. log(Price)",
+     xlab="log(Price)", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(logPr),col="dark blue",lty="dotted")
+
+plot(x=dummy1, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. Yellow Dummy",
+     xlab="Yellow Dummy", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(dummy1),col="dark blue",lty="dotted")
+
+plot(x=dummy2, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. Green Dummy",
+     xlab="Green  Dummy", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(dummy2),col="dark blue",lty="dotted")
+
+plot(x=quality, y=logQ, col="blue", main="Correlation: \n log(Sales) vs. Quality Index",
+     xlab="Quality Index", ylab = "log(Sales)", pch=16)
+abline(h=mean(logQ),col="dark blue",lty="dotted")
+abline(v=mean(quality),col="dark blue",lty="dotted")
+```
+
+```{r}
+regout_full = lm(logQ ~ logPr+dummy1+dummy2+quality)
+print(summary(regout_full))
+
+regout_short = lm(logQ ~ logPr+dummy1+dummy2)
+print(summary(regout_short))
+```
+regout_full모형과 regout_short모형을 비교해 보았을 때, 가장 먼저 F-statistic 을 비교했습니다. F-statistic이 short모델이 감소한 것을 볼 수 있었고, 모델의 유의함이 감소하였습니다. 그러나 p-value는 여전히 상당히 낮으므로 F-statistic아 낮은 것이 문제가 되지 않습니다. 그 다음에 Adjusted R-squared을 확인하였는데, 설명력이 매우 낮아 진 것을 확인 할 수 있습니다. 16.84%에서 5.763%, 약 10%가 감소하였습니다. 그러나 우리가 관심있는 것은 각 변수가 y에 어떤 영향을 미치는 가 이기 때문에 낮아지는 것을 크게 신경 쓰지 않는다. 다음으로 Coefficients의 p-value를 보는데, full, short모형 둘다 모든 변수가 유의하므로 Estimate를 봅니다. 그 중 우리가 관심있는 X는 가격계수인 logPr이므로 logPr을 집중적으로 볼 것이다. quality 를 뺐을 때 logPr이 계수가 약 1.6정도 증가하는 것을 볼 수 있다. 이 말은 즉슨 logPr변수가 Y에 대한 영향력이 감소한다는 이야기 이다. p-value는 두 모델이 모두 유의하다는 결과로 나오기 때문에 두 경우 모두 유의하다고 할 수 있다. Residual standard error은 증가하였다. RMSE가 증가했다고 판단을 내린다.
+
+
+
+OVB(Omitted Variable Bias)관점으로 본다면, 상관성을 먼저 볼 필요성이 있다.
+```{r}
+round(cor(cbind(logQ,logPr, dummy1, dummy2,quality)),2)
+```
+logPr과 quality의 상관성은 매우 강하게 나타나고 있다. 또한 위에서 모든 변수를 모델에 적합하였을 때, 모델의 유의함을 F통계량과 p-value로 보여주고 Coefficients, 각 계수들은 참값인 3, -3, 1.5, 0.7, 3과 비슷하게 나타난다. 이는 모델이 상당히 정확하다고 판단하는 근거가 된다. 또한 회귀추정게수가 positive를 나타내고 있다. 
+
+그러나 품질인 quality를 제거했을 때 변화한 logPr은 logPr과 quality의 상관성과 모델의 계수추정치가 positive로 인하여 Upward bias의 가능성이 있다고 판단할 수 있다.
+$$(X_1'X)^{-1}X_1'X_2 = Corr(X_1, X_2)$$
+
+결과적으로 회귀계수는 과대추정 되었음을 알 수 있고, 가격의 효과에 대해서는 계수가 음수이므로 과소추정이 되었다고 결론을 내릴 수 있다. 이는 가격이 한 단위 증가할 때, 판매량이 적게 감소하는 것을 의미한다. 그러므로 가격 탄력성에 대해서도 과소추정했다는 결론을 내릴 수 있다.
+
+
+
+
+
+#
+
+
+##2.	품질과 가격간의 상관관계가 없는 모형
+
+###-	주어진 코드에서 다음 내용을 수정하여 품질과 가격간의 상관관계가 “없는” 자료를 생성 (quality 생성할 때 u2를 포함하지 않으면 됨) 즉,
+
+###	현재 코드: quality = u3 + u2s
+###	수정된 코드: quality = u3 
+
+###-	품질(Quality)이 포함된 모형과 그렇지 않은 모형간의 회귀 결과 비교 
+```{r}
+set.seed(26)
+
+n = 5000
+trueB = c(3,-3, 1.5, 0.7, 3)
+err = rnorm(n,sd=3)
+
+u1 = runif(n)
+u2 = runif(n)
+u3 = runif(n)
+u4 = runif(n)
+
+logPr = u1 +  u2
+quality = u3
+dummy1 = (u4> 0.7)*1.0
+dummy2 = ((u4<0.7)&(u4>0.3))*1.0
+
+logQ= trueB[1] + trueB[2]*logPr + trueB[3]*dummy1 + trueB[4]*dummy2 + trueB[5]*quality + err
+```
+
+
+```{r}
+round(cor(cbind(logQ,logPr, dummy1, dummy2,quality)),2)
+```
+logPr과 quality의 상관관계를 줄이기 위해 quality를 새롭게 정의하였다. 두 변수의 상관관계는 0.01로써 거의 없어졌다고 볼 수 있다. 단 logQ와의 상관관계는 증가한 것을 확인 할 수 있다.
+
+
+```{r}
+regout_full = lm(logQ ~ logPr+dummy1+dummy2+quality)
+print(summary(regout_full))
+
+regout_short = lm(logQ ~ logPr+dummy1+dummy2)
+print(summary(regout_short))
+```
+두 모델 모두 F-statistic이 높고 p-value가 모델의 유의함을 나타내고 있다. 또한 위의 모델은 계수들이 참값들과 매우 근접함을 보이므로 좋은 모델이라고 할 수 있다.
+
+
+또한 두번째 모델의 logPr을 보면 1번의 예시와는 다르게 회귀계수의 변화가 거의 없음을 알 수 있다. 3개의 변수는 모두 참값과 유사하며 intercept 값이 변했음을 알 수 있다. 이를 통해 X변수의 상관성이 적을 경우, quality와 상관성이 높은 다른 X의 변수가 없을 때, 변수를 제거 하면 다른변수에 큰 영향이 없다고 할 수 있으며(공분산이 낮으므로) 상수항인 intercept 에 풀링되었음을 알 수 있다.
+
+
+
+
+
+
+
+```{r include=F}
+setwd("C:/workspace/Github/snu_edu/3 semester/Data Driven Marketing Analytics/HW1")
+didmarket = read.csv('didmarket.csv')
+
+# brand
+#	1. Dove
+#	2. Palmolive
+#	3. Dawn
+#	4. Joy
+#	5. Cascade
+#	6. Ivory
+#	7. Dominicks
+
+
+# check demand with log-log model
+v = matrix(didmarket$volume,ncol=7)
+pr = matrix(didmarket$price,ncol=7)
+pm = matrix(didmarket$promo,ncol=7)
+w = matrix(didmarket$wpr,ncol=7)
+
+b= matrix(0, nrow=7, ncol=9)
+for (k in 1:7){
+	tempb = lm(log(v[,k])~log(pr)+pm[,k])
+	b[k,]=tempb$coefficients
+	print(summary(tempb))
+}
+
+# fit the model logS(k) = logPr(1,..,7)+logLaggedS(k) with 1 year data
+b1= matrix(0, nrow=7, ncol=9)
+for (k in 1:7){
+	tempb = lm(log(v[11:62,k])~log(pr[11:62,])+log(v[10:61,k]))
+	b1[k,]=tempb$coefficients
+	print(summary(tempb))
+}
+
+# expected profit at average price and average wholesale price
+avgpr = colMeans(pr[11:62,])
+avgwp = colMeans(w[11:62,])
+avgv = colMeans(v[11:62,])
+avgvlag = colMeans(v[10:61,])
+
+predictor = cbind(rep(1,7),t(matrix(rep(log(avgpr),7),nrow=7)),log(avgvlag))
+predictedv = exp(rowSums(predictor*b1))
+predictedprofit = sum(predictedv*(avgpr-avgwp))
+
+weightedprice = sum(predictedv*avgpr)/sum(predictedv)
+
+bound = weightedprice*0.05
+
+profit = function(newprice){
+
+	if (max(abs((newprice-avgpr)/avgpr))>0.05) npredictedprofit = max(abs((newprice-avgpr)/avgpr))*(-10000)
+	else {
+		npredictor = cbind(rep(1,7),t(matrix(rep(log(newprice),7),nrow=7)),log(avgvlag))
+		npredictedv = exp(rowSums(npredictor*b1))
+		
+		nweightedprice = sum(npredictedv*newprice)/sum(npredictedv)
+
+		if (abs(nweightedprice-weightedprice)>bound) npredictedprofit = abs(nweightedprice-weightedprice)*(-10000)
+		else npredictedprofit = sum(npredictedv*(newprice-avgwp))
+	}
+	return(-npredictedprofit)
+}
+
+
+optprice = optim(avgpr,profit,control=list(maxit=5000))
+
+print(cbind(avgpr,optprice$par,optprice$par/avgpr-1))
+```
+
+
+
+
