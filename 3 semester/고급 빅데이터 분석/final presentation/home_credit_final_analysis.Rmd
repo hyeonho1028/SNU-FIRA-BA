@@ -1,0 +1,369 @@
+---
+title: "home_credit_final_analysis"
+author: "Hyeonho Lee"
+date: "2018년 10월 18일"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(caret)
+# library(lightgbm)
+library(knitr)
+library(xgboost)
+library(ggplot2)
+library(magrittr)
+```
+
+```{r}
+application_train = read_csv('D:/application_train.csv')
+```
+
+```{r}
+ind = sample(nrow(application_train), nrow(application_train)*0.1, replace = F)
+
+application_test = application_train[ind,]
+application_train = application_train[-ind,]
+
+y_test = application_test$TARGET
+application_test$TARGET = NULL
+```
+
+
+```{r}
+application_train2 <- application_train %>%
+  select(-TARGET)
+
+features <- colnames(application_train2)
+
+for (f in features) {
+  if ((class(application_train2[[f]])=="factor") || (class(application_train2[[f]])=="character")) {
+    levels <- unique(application_train2[[f]])
+    application_train2[[f]] <- as.numeric(factor(application_train2[[f]], levels=levels))
+  }
+}
+
+application_train2$TARGET = NULL
+application_train2$TARGET = as.factor(application_train$TARGET)
+levels(application_train2$TARGET) = make.names(unique(application_train2$TARGET))
+
+
+application_test2 = application_test 
+
+features <- colnames(application_test2)
+
+for (f in features) {
+  if ((class(application_test2[[f]])=="factor") || (class(application_test2[[f]])=="character")) {
+    levels <- unique(application_test2[[f]])
+    application_test2[[f]] <- as.numeric(factor(application_test2[[f]], levels=levels))
+  }
+}
+```
+
+```{r}
+formula = TARGET ~ .
+
+fitControl <- trainControl(method="none",number = 5,  classProbs = TRUE, summaryFunction = twoClassSummary)
+
+xgbGrid <- expand.grid(nrounds = 100,
+                       max_depth = 7,
+                       eta = .05,
+                       gamma = 0,
+                       colsample_bytree = .8,
+                       min_child_weight = 1,
+                       subsample = 1)
+
+set.seed(13)
+
+XGBModel = train(formula, data = application_train2,
+                        method = "xgbTree",trControl = fitControl,
+                        tuneGrid = xgbGrid,na.action = na.pass,metric="ROC"
+                       )
+# XGBModel
+predictions = predict(XGBModel,application_test2,na.action=na.pass,type="prob")
+```
+
+```{r}
+# AUC
+library(ROCR)
+# Training set
+AUC = performance(prediction(predictions$X0, y_test) , "auc")
+AUC@y.values # area under the curve
+
+# ROC curve
+ROC = performance(prediction(predictions$X0 ,y_test) , "tpr","fpr")
+plot(ROC , main = paste("ROC curve for Train data\n AUC:",
+round(as.numeric(AUC@y.values),4)),
+col = "blue", lwd = 2.5)
+abline(c(0,0), c(1,1), lty = 2, lwd = 2)
+```
+
+```{r}
+importance = varImp(XGBModel)
+
+varImportance <- data.frame(Variables = row.names(importance[[1]]), 
+                            Importance = round(importance[[1]]$Overall,2))
+
+# Create a rank variable based on importance
+rankImportance <- varImportance %>%
+  mutate(Rank = paste0('#',dense_rank(desc(Importance)))) %>%
+  head(10)
+
+rankImportancefull = rankImportance
+
+ggplot(rankImportance, aes(x = reorder(Variables, Importance), 
+                           y = Importance)) +
+  geom_bar(stat='identity',colour="white", fill = "skyblue") +
+  geom_text(aes(x = Variables, y = 1, label = Rank),
+            hjust=0, vjust=.5, size = 4, colour = 'black',
+            fontface = 'bold') +
+  labs(x = 'Variables', title = 'Relative Variable Importance') +
+  coord_flip() + 
+  theme_bw()
+```
+
+
+
+
+
+
+
+Missing data exploratory
+```{r}
+data.table::data.table(
+  missing = sapply(application, function(x) { (sum(is.na(x)) / length(x)) }),
+  column = names(application)
+  ) %>% filter(missing>0) %>% 
+  ggplot(aes(x = reorder(column, -missing), y = missing)) + 
+  geom_bar(stat = 'identity', fill = 'steelblue') + 
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  labs(
+    title='Missing data by feature',
+    x='Feature',
+    y='% missing') + 
+  coord_flip()
+```
+
+```{r}
+# 전체 NA
+sum(is.na(application))/(nrow(application)*ncol(application)) 
+
+
+count_target<-data.table::data.table(value = c("NA", "NOT NA"), count = c(9152465,37516342))
+colors <- c('rgb(211,94,96)', 'rgb(114,147,203)')#, 'rgb(144,103,167)', 'rgb(171,104,87)', 'rgb(114,147,203)')
+
+count_target %>% 
+  plot_ly(labels = ~value, values = ~count) %>%
+  add_pie(hole = 0.6) %>%
+  layout(title = "Percent of NA",  showlegend = T,
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+```
+
+
+============================================================================================================================================================================================================================================================================================
+
+xgboost
+```{r}
+application = read_csv('D:/application_train.csv')
+application %<>% select(-c(EXT_SOURCE_1,EXT_SOURCE_2,EXT_SOURCE_3))
+```
+
+```{r}
+missing_data_train <- as.data.frame(sort(sapply(application, function(x) sum(is.na(x))),decreasing = T))                                                   
+colnames(missing_data_train)[1] <- "Missing_values"
+missing_data_train$Percentage <- (missing_data_train$Missing_values/nrow(train))*100      
+missing_data_train$Variables <- rownames(missing_data_train)
+                                                
+#Variables containing NAs less than 15% train dataset                                           
+missing_data_train<-subset(missing_data_train,missing_data_train$Percentage<15)                                           
+less_na_columns_train<-missing_data_train$Variables                                               
+
+application %<>% select(less_na_columns_train)
+```
+
+```{r}
+set.seed(123)
+ind = sample(nrow(application), nrow(application)*0.9, replace = F)
+train = application[ind,]
+test = application[-ind,]
+
+y_test = test$TARGET
+test$TARGET = NULL
+```
+
+```{r}
+full <- bind_rows(train,test)
+
+Target <- train$TARGET
+Id <- test$SK_ID_CURR
+full[,c('SK_ID_CURR','TARGET')] <- NULL
+
+chr <- full[,sapply(full, is.character)]
+num <- full[,sapply(full, is.numeric)]
+
+chr[is.na(chr)] <- "Not Available"
+
+fac <- chr %>% 
+  lapply(as.factor) %>% 
+  as_data_frame()
+
+
+full <- bind_cols(fac, num)
+rm(chr, fac, num)
+
+full[is.na(full)] <- 0
+
+num <- train[, sapply(train,is.numeric)]
+
+rm(train, test)
+
+train <- full[1:length(Target),]
+test <- full[(length(Target)+1):nrow(full),]
+```
+
+```{r}
+set.seed(123)
+inTrain <- createDataPartition(Target, p=.9, list = F)
+
+tr <- train[inTrain,]
+va <- train[-inTrain,]
+
+tr_ta <- Target[inTrain]
+va_ta <- Target[-inTrain]
+```
+
+```{r}
+dtr = xgb.DMatrix(data = data.matrix(tr), label = tr_ta)
+dval = xgb.DMatrix(data = data.matrix(va), label = va_ta)
+dtrain = xgb.DMatrix(data = data.matrix(rbind(tr,va)), label = c(tr_ta,va_ta))
+
+p <- list(objective = "reg:linear",
+          booster = "gbtree",
+          eval_metric = "rmse",
+          nthread = 4,
+          eta = 0.05,
+          max_depth = 8,
+          min_child_weight = 4,
+          gamma = 0.1,
+          subsample = 0.9,
+          colsample_bytree = 0.5,
+          nrounds = 3000)
+
+set.seed(0)
+m_xgb <- xgb.train(p, dtr, p$nrounds, list(val = dval), print_every_n = 100, early_stopping_rounds = 100)
+
+
+test %<>% mutate_if(is.factor, as.integer)
+test = xgb.DMatrix(data = data.matrix(test))
+
+pred = predict(m_xgb, test)
+```
+
+```{r}
+# AUC
+library(ROCR)
+# Training set
+AUC = performance(prediction(pred, y_test) , "auc")
+AUC@y.values # area under the curve
+
+# ROC curve
+ROC = performance(prediction(pred ,y_test) , "tpr","fpr")
+plot(ROC , main = paste("ROC curve for Train data\n AUC:",
+round(as.numeric(AUC@y.values),4)),
+col = "blue", lwd = 2.5)
+abline(c(0,0), c(1,1), lty = 2, lwd = 2)
+```
+
+logistic regression
+```{r}
+train2 = model.matrix(Target ~ .,  data=cbind(train, Target))[,-1]
+
+
+
+
+mod_fit <- train(Target ~ .,  data=train2, method="glm", family="binomial")
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+application_train %<>% select(-c(EXT_SOURCE_1,EXT_SOURCE_2,EXT_SOURCE_3))
+
+ind = sample(nrow(application_train), nrow(application_train)*0.1, replace = F)
+
+application_test = application_train[ind,]
+application_train = application_train[-ind,]
+
+y_test = application_test$TARGET
+application_test$TARGET = NULL
+```
+
+```{r}
+model = glm(TARGET~., data = application_train[,1:19], family = 'binomial')
+pred = predict(model, application_test, type = 'response')
+```
+
+```{r}
+# AUC
+library(ROCR)
+# Training set
+AUC = performance(prediction(pred, y_test) , "auc")
+AUC@y.values # area under the curve
+
+# ROC curve
+ROC = performance(prediction(pred ,y_test) , "tpr","fpr")
+plot(ROC , main = paste("ROC curve for Train data\n AUC:",
+round(as.numeric(AUC@y.values),4)),
+col = "blue", lwd = 2.5)
+abline(c(0,0), c(1,1), lty = 2, lwd = 2)
+```
+
+
+
+
+
+
+
+
+
+
+
