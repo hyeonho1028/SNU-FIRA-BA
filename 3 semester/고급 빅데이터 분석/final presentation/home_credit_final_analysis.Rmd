@@ -162,9 +162,9 @@ count_target %>%
 ```
 
 
-============================================================================================================================================================================================================================================================================================
+----------------------------------------------------------------------------------------------------------------------------------------------
 
-xgboost
+read in data
 ```{r}
 application = read_csv('D:/application_train.csv')
 application %<>% select(-c(EXT_SOURCE_1,EXT_SOURCE_2,EXT_SOURCE_3))
@@ -234,6 +234,9 @@ tr_ta <- Target[inTrain]
 va_ta <- Target[-inTrain]
 ```
 
+
+
+xgb
 ```{r}
 dtr = xgb.DMatrix(data = data.matrix(tr), label = tr_ta)
 dval = xgb.DMatrix(data = data.matrix(va), label = va_ta)
@@ -259,110 +262,204 @@ test %<>% mutate_if(is.factor, as.integer)
 test = xgb.DMatrix(data = data.matrix(test))
 
 pred = predict(m_xgb, test)
+pred = ifelse(pred<0,0,pred)
+rocgraph(pred)
+
+data.table::data.table(xgb.importance(model = m_xgb))[1:20,]
+xgb.plot.importance(data.table::data.table(xgb.importance(model = m_xgb))[1:20,])
 ```
 
+F1 score
+```{r}
+cutoff_can = seq(0.01, 0.99, by = 0.01)
+cutoff_out = t(sapply(1:length(cutoff_can),function(i) cutoff_res(pred, y_test, cutoff_can[i])[[1]]))
+
+colnames(cutoff_out) = c("cutoff","error rate","sensitivity","specificity","f1 score")
+
+cutoff_out[which.max(cutoff_out[,5]),]
+
+cutoff_res(pred, y_test, cutoff_out[which.max(cutoff_out[,5]), 1])[[2]]
+```
+
+
+F1지표 최대화 cut-off(xg-boost)
+```{r}
+cutoff_res = function(pred_prob, response, cutoff){
+  pred = ifelse(pred_prob> cutoff, 1, 0)
+  error_rate = mean(response != pred)
+  sensitivity = sum(response == 1 & pred == 1)/sum(response == 1)
+  specificity = sum(response == 0 & pred == 0)/sum(response == 0)
+  precision = sum(response == 1 & pred == 1)/sum(pred == 1)
+  recall = sensitivity
+  if (sum(response == 1 & pred == 1) == 0) {f1 = 0}
+  else {f1 = 2*(precision*recall)/(precision+recall)}
+  cross_table = table(response, pred)
+  return(list(res = c(cutoff, round(error_rate,4),
+  round(sensitivity,4), round(specificity,4), round(f1, 4)),
+  cross_table = cross_table))
+}
+```
+
+
+
+ROC CURVE
 ```{r}
 # AUC
 library(ROCR)
-# Training set
-AUC = performance(prediction(pred, y_test) , "auc")
-AUC@y.values # area under the curve
 
-# ROC curve
-ROC = performance(prediction(pred ,y_test) , "tpr","fpr")
-plot(ROC , main = paste("ROC curve for Train data\n AUC:",
-round(as.numeric(AUC@y.values),4)),
-col = "blue", lwd = 2.5)
-abline(c(0,0), c(1,1), lty = 2, lwd = 2)
+rocgraph <- function(pred){
+  # Training set
+  AUC = performance(prediction(pred, y_test) , "auc")
+  AUC@y.values # area under the curve
+  
+  # ROC curve
+  ROC = performance(prediction(pred ,y_test) , "tpr","fpr")
+  plot(ROC , main = paste("ROC curve for Train data\n AUC:",
+  round(as.numeric(AUC@y.values),4)),
+  col = "blue", lwd = 2.5)
+  abline(c(0,0), c(1,1), lty = 2, lwd = 2)
+}
 ```
+
+
+
 
 logistic regression
 ```{r}
-train2 = model.matrix(Target ~ .,  data=cbind(train, Target))[,-1]
+a = cbind(train, Target)
+a$Target = as.factor(a$Target)
 
+fitControl <- trainControl(## 4-fold CV
+  method = "cv",
+  number = 4,
+  savePredictions = TRUE
+)
 
+mod_fit <- train(Target ~ .,  data = a[,c(10:118)], method="glm", family=binomial(),
+                 trControl=fitControl)
 
-
-mod_fit <- train(Target ~ .,  data=train2, method="glm", family="binomial")
-
-
-
-
-
-
+pred = predict(mod_fit, test, type = 'prob')
+rocgraph(pred['1'])
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Regularized Logistic Regression
 ```{r}
-application_train %<>% select(-c(EXT_SOURCE_1,EXT_SOURCE_2,EXT_SOURCE_3))
+a = cbind(train, Target)
+a$Target = as.factor(a$Target)
 
-ind = sample(nrow(application_train), nrow(application_train)*0.1, replace = F)
+cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
+                       # classProbs = TRUE,
+                       # summaryFunction = twoClassSummary)
+rlGrid <- expand.grid( cost = c(200,2,0.02),
+                       loss = c("L1", "L2_dual", "L2_primal"),
+                       epsilon = c(0.001,0.01) )
 
-application_test = application_train[ind,]
-application_train = application_train[-ind,]
+test_class_cv_model <- train(Target~., data = a,
+                             method = "regLogistic",
+                             tuneGrid = rlGrid, 
+                             trControl = cctrl1,
+                             # metric = "ROC",
+                             preProc = c("center", "scale"))
 
-y_test = application_test$TARGET
-application_test$TARGET = NULL
+rlr_model = test_class_cv_model
+
+
+pred = predict(rlr_model, test, type = 'prob')
+rocgraph(pred['1'])
+
+sort(abs(rlr_model$finalModel$W))
+
+
+namesA = names(data.frame(abs(data.frame(rlr_model$finalModel$W))>0.1))[abs(data.frame(rlr_model$finalModel$W))>0.1]
+
+t(as.matrix(data.frame(rlr_model$finalModel$W)[,namesA]))
+
+
 ```
 
+
+logit bagging(skip)
 ```{r}
-model = glm(TARGET~., data = application_train[,1:19], family = 'binomial')
-pred = predict(model, application_test, type = 'response')
+a = cbind(train, Target)
+a$Target = as.factor(a$Target)
+
+seeds <- vector(mode = "list", length = nrow(a) + 1)
+seeds <- lapply(seeds, function(x) 1:20)
+
+rctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all", seeds = seeds)
+rctrl2 <- trainControl(method = "cv", seeds = seeds)
+
+test_class_cv_form <- train(Target ~ ., data = a, 
+                            method = "logicBag", 
+                            trControl = rctrl2,
+                            tuneGrid = expand.grid(ntrees = 2:3,
+                                                   nleaves = 2^(4:5)),
+                            B = 3,
+                            seed = 1)
+
+pred = predict(test_class_cv_form, test, type = 'prob')
+rocgraph(pred['1'])
 ```
 
+
+logit bagging
 ```{r}
-# AUC
-library(ROCR)
-# Training set
-AUC = performance(prediction(pred, y_test) , "auc")
-AUC@y.values # area under the curve
+pred = list()
 
-# ROC curve
-ROC = performance(prediction(pred ,y_test) , "tpr","fpr")
-plot(ROC , main = paste("ROC curve for Train data\n AUC:",
-round(as.numeric(AUC@y.values),4)),
-col = "blue", lwd = 2.5)
-abline(c(0,0), c(1,1), lty = 2, lwd = 2)
+for (i in 1:100){
+  sample = sample(ncol(a), 10, replace=F)
+  
+  glm_model = glm(Target~., data = a[,sample], family = "binomial")
+  
+  pred[[i]] = predict(glm_model, test, type = "response")
+}
+
+pred = matrix(unlist(pred), nrow = 30752, ncol = 100)
+pred = apply(pred, 1, mean)
+
+rocgraph(pred)
 ```
 
 
+logistic boosting
+```{r}
+require(gbm)
+
+Boston.boost=gbm(Target ~ . ,data = a,distribution = "gaussian", n.trees = 10000,
+                  shrinkage = 0.01, interaction.depth = 4)
 
 
+summary(Boston.boost) #Summary gives a table of Variable Importance and a plot of Variable Importance
 
 
+#Plot of Response variable with lstat variable
+plot(Boston.boost,i="lstat") 
+#Inverse relation with lstat variable
 
+plot(Boston.boost,i="rm") 
+#as the average number of rooms increases the the price increases
+
+n.trees = seq(from=100 ,to=10000, by=100) #no of trees-a vector of 100 values 
+
+#Generating a Prediction matrix for each Tree
+predmatrix<-predict(Boston.boost,test,n.trees = n.trees)
+dim(predmatrix) #dimentions of the Prediction Matrix
+
+#Calculating The Mean squared Test Error
+test.error<-with(test,apply( (predmatrix-y_test)^2,2,mean))
+head(test.error) #contains the Mean squared test error for each of the 100 trees averaged
+
+#Plotting the test error vs number of trees
+
+plot(n.trees , test.error , pch=19,col="blue",xlab="Number of Trees",ylab="Test Error", main = "Perfomance of Boosting on Test Set")
+
+#adding the RandomForests Minimum Error line trained on same data and similar parameters
+abline(h = min(test.error),col="red") #test.err is the test error of a Random forest fitted on same data
+legend("right",c("Minimum Test error Line for Random Forests"),col="red",lty=1,lwd=1)
+
+rocgraph(data.frame(predmatrix)[,4]-1)
+```
 
 
 
