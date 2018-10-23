@@ -269,6 +269,30 @@ rocgraph(pred)
 # xgb.plot.importance(data.table::data.table(xgb.importance(model = m_xgb))[1:20,])
 ```
 
+sensitivity
+```{r}
+cutoff_can = seq(0.01, 0.99, by = 0.01)
+cutoff_out = t(sapply(1:length(cutoff_can),function(i) cutoff_res(pred, y_test, cutoff_can[i])[[1]]))
+
+colnames(cutoff_out) = c("cutoff","error rate","sensitivity","specificity","f1 score")
+
+cutoff_out[which.max(cutoff_out[,3]),]
+
+cutoff_res(pred, y_test, cutoff_out[which.max(cutoff_out[,3]), 1])[[2]]
+```
+
+sensitivity
+```{r}
+cutoff_can = seq(0.01, 0.99, by = 0.01)
+cutoff_out = t(sapply(1:length(cutoff_can),function(i) cutoff_res(pred, y_test, cutoff_can[i])[[1]]))
+
+colnames(cutoff_out) = c("cutoff","error rate","sensitivity","specificity","f1 score")
+
+cutoff_out[which.max(cutoff_out[,4]),]
+
+cutoff_res(pred, y_test, cutoff_out[which.max(cutoff_out[,4]), 1])[[2]]
+```
+
 F1 score
 ```{r}
 cutoff_can = seq(0.01, 0.99, by = 0.01)
@@ -282,7 +306,45 @@ cutoff_res(pred, y_test, cutoff_out[which.max(cutoff_out[,5]), 1])[[2]]
 ```
 
 
-F1지표 최대화 cut-off(xg-boost)
+```{r}
+agepred = cbind(round(test$DAYS_BIRTH/-365,0), round(pred,2))
+colnames(agepred) <- c("age", "prob")
+
+agepred %>% data.frame() %>% group_by(age) %>% summarise(prob_predict_1 = mean(prob)) %>% round(2) %>% 
+  ggplot(aes(x = age, y = prob_predict_1)) + geom_line() + theme_bw()
+
+agepred = cbind(round(test$DAYS_ID_PUBLISH/-365,0), round(pred,2))
+colnames(agepred) <- c("DAYS_ID_PUBLISH", "prob")
+
+agepred %>% data.frame() %>% group_by(DAYS_ID_PUBLISH) %>% summarise(prob_predict_1 = mean(prob)) %>% round(2) %>% 
+  filter(DAYS_ID_PUBLISH<20) %>% 
+  ggplot(aes(x = DAYS_ID_PUBLISH, y = prob_predict_1)) + geom_line() + theme_bw()
+
+
+agepred = cbind(round(test$AMT_ANNUITY,-4), round(pred,2))
+colnames(agepred) <- c("AMT_ANNUITY", "prob")
+
+agepred %>% data.frame() %>% group_by(AMT_ANNUITY) %>% summarise(prob_predict_1 = mean(prob)) %>% round(2) %>% 
+  ggplot(aes(x = AMT_ANNUITY, y = prob_predict_1)) + geom_line() + theme_bw()
+
+
+agepred = cbind(round(test$DAYS_LAST_PHONE_CHANGE/-365,0), round(pred,2))
+colnames(agepred) <- c("DAYS_LAST_PHONE_CHANGE", "prob")
+
+agepred %>% data.frame() %>% group_by(DAYS_LAST_PHONE_CHANGE) %>% summarise(prob_predict_1 = mean(prob)) %>% round(2) %>% 
+  ggplot(aes(x = DAYS_LAST_PHONE_CHANGE, y = prob_predict_1)) + geom_line() + theme_bw()
+```
+
+
+
+
+
+
+
+
+
+
+cross table 만들기
 ```{r}
 cutoff_res = function(pred_prob, response, cutoff){
   pred = ifelse(pred_prob> cutoff, 1, 0)
