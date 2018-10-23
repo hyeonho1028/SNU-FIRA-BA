@@ -265,8 +265,8 @@ pred = predict(m_xgb, test)
 pred = ifelse(pred<0,0,pred)
 rocgraph(pred)
 
-data.table::data.table(xgb.importance(model = m_xgb))[1:20,]
-xgb.plot.importance(data.table::data.table(xgb.importance(model = m_xgb))[1:20,])
+# data.table::data.table(xgb.importance(model = m_xgb))[1:20,]
+# xgb.plot.importance(data.table::data.table(xgb.importance(model = m_xgb))[1:20,])
 ```
 
 F1 score
