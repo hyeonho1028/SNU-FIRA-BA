@@ -1,0 +1,31 @@
+library(rvest)
+library(KoNLP)
+library(stringr)
+library(wordcloud)
+
+
+# 네이버 tv cast, 워드클라우드
+url = "http://tv.naver.com/cjenm.reply1988"
+
+# read html 
+mymain = read_html(url)
+
+titles = mymain %>% html_nodes(".cds_info") %>% html_nodes(".title")%>% html_text()
+titles = str_trim(titles)
+hit = mymain %>% html_nodes(".cds_info") %>% html_nodes(".hit")%>% html_text()
+hit = as.numeric(gsub(",", "", hit))
+likes = mymain %>% html_nodes(".cds_info") %>% html_nodes(".like")%>% html_text()
+likes = as.numeric(gsub(",", "", likes))
+time = mymain %>% html_nodes(".cds_info") %>% html_nodes(".time")%>% html_text()
+
+# temp = mymain %>% html_nodes("tooltip")  #selectorgadeget을 이용한 결과
+video = data.frame(titles,hit,likes,time)
+
+sum(str_count(video$titles, "응답"))
+sum(str_count(video$titles, "혜리"))
+
+vtxt = extractNoun(as.character(video$titles))  # as.character를 하지 않으면 factor로 인식
+unvtxt = unlist(vtxt)  # list를 풀어줌
+wordcount = table(unvtxt)
+wordcloud(names(wordcount), freq=wordcount, scale=c(5,1), rot.per=0.25,  min.freq=1, random.order=F, 
+      random.color=T, colors = brewer.pal(0,"Set1"))
