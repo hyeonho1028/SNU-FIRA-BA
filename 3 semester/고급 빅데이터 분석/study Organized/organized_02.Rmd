@@ -1,0 +1,17 @@
+---
+title: "organized_02"
+author: "Hyeonho Lee"
+date: "2018년 10월 7일"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+header-includes :
+  - \usepackage{kotex}
+---
+
+#세그멘테이션(다차원 척도법, 군집분석)
+##다차원 척도법 Multidimensional Scaling(MDS)
