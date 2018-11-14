@@ -1,0 +1,28 @@
+---
+title: "organized_02"
+author: "Hyeonho Lee"
+date: "2018년 10월 7일"
+output: 
+  pdf_document: 
+    toc: true
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+header-includes :
+  - \usepackage{kotex}
+  - \usepackage{setspace}
+  - \usepackage{booktabs}
+---
+
+#타겟마케팅
+##로지스틱회귀모형
+
+##모형선택
+
+##모형평가
+
+##기계학습 방법론 : 고차원회귀모형
+
+##기계학습 방법론 : 의사결정나무 및 앙상블
