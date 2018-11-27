@@ -3,9 +3,10 @@
 ---
 1학기
   - R [link](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/R%20programing)
-      - [Exploratory data analysics](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/R%20programing/Exploratory%20data%20analysics)
-      - [text mininig news scraping](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/R%20programing/text%20mininig%20news%20scraping)
+      - Exploratory data analysics [link](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/R%20programing/Exploratory%20data%20analysics)
+      - text mininig news scraping [link](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/R%20programing/text%20mininig%20news%20scraping)
   - Python [link](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/Python%20programing)
+      - hw [link](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/1%20semester/Python%20programing/hw)
   - 데이터분석과 추론
 ---
 2학기
