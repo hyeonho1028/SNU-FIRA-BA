@@ -22,4 +22,5 @@
   - 캡스톤 프로젝트 준비 
 ---
 4학기
-  - 캡스톤 프로젝트(해상물류, 선박 도착시간 예측 프로젝트)
+  - 캡스톤 프로젝트
+    - 해상물류/선박 도착시간 예측 프로젝트 - 삼성SDS제언 프로젝트 [link](https://github.com/hyeonho1028/SNU_FIRA_BA/tree/master/4%20semester(capstone%20project))
