@@ -1,0 +1,62 @@
+---
+title: "organized_rnn"
+author: "Hyeonho Lee"
+date: "2018.12.22"
+output:
+  pdf_document:
+    toc: true
+    latex_engine: xelatex
+  html_document: default
+  word_document:
+    highlight: tango
+mainfont: NanumGothic
+header-includes :
+  - \usepackage{kotex}
+  - \usepackage{setspace}
+  - \usepackage{booktabs}
+---
+
+\newpage
+# RNN이란
+- 순차적으로 들어오는 정보를 처리하는 Neural Network
+- 문장에서 다음에 나올 단어를 추측하고 싶은 경우 이전에 나온 단어의 정보가 필요
+- 동일한 task를 입력값 시퀀스($x_t$)의 모든 요소마다 적용하고, 출력결과 ($\hat{y_t}$)에서는 이전 시간의 계산결과($h_{t-1}$)에 영향을 받는다.
+
+## 왜 RNNs인가?
+- Non-linear Auto-Regressive with eXogeneous inputs (NARX) model : \
+$$\hat{y}_{t+1}=F(y_t, t_{t-1}, ..., y_{t-d_y}, x_t, x_{t-1}, ..., x_{t-d_x})$$
+여기서 F는 비선형 함수이다.
+- 시계열 자료의 예측에 주로 사용되는 모형으로 Delay($d_y, d_x$)을 통해 현재 시점에서 얼마나 먼 과거까지 입력값으로 넣을지 결정
+- 고정된 크기의 Delay을 고려하기 때문에 만약 Delay 이전 시점의 정보가 필요한 경우 좋지 않은 결과를 나타냄
+- 일반적으로 AR기반 모형은 dependency가 지수적으로 감소하여 Long-range dependencies의 자료에서 사용할 수 없다.
+
+## Hidden Markov models(HMMs)
+- 은닉변수 $x_t$의 조건부 확률 분포는 오직 은닉 변수 x_{t-1}에 의존
+$$P(X_t|x_0, ..., X_{t-1})=P(X_t|X_{t-1})$$
+- N : 가능한 y의 상태 수
+- M : 가능한 x의 상태 수
+- N, M을 가정하면 평균에 영향을 주는 M개의 모수와 공분한 행렬에 영향을 주는 $\frac{M(M+1)}{2}$개의 모수가 존재하므로 전체 $O(NM^2)$개의 출력모수가 존재한다.
+- Long-range dependencies의 자료에서는 M의 값이 너무 커지게 되므로 계산량의 측면에서 비실용적이다.\
+- 이러한 문제들을 RNN의 경우 HMMs의 계산문제를 피하고 long-range dependecies을 포착하는 모형을 만들 수 있다.
+
+# 표기법
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
