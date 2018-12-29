@@ -112,17 +112,17 @@ author:
   email            :
   links:
     - label: "first semester"
-      icon: "[]()"
-      # url: mailto:your.name@email.com
+      icon: ![]()
+      url: "https://hyeonho1028.github.io"
     - label: "second semester"
-      icon: "[]()"
-      # url: "https://your-website.com"
+      icon: ![]()
+      url: "https://hyeonho1028.github.io"
     - label: "third semester"
-      icon: "[]()"
-      # url: "https://twitter.com/"
+      icon: ![]()
+      url: "https://hyeonho1028.github.io"
     - label: "fourth semester"
-      icon: "[]()"
-      # url: "https://facebook.com/"
+      icon: ![]()
+      url: "https://hyeonho1028.github.io"
 
 # Site Footer
 footer:
