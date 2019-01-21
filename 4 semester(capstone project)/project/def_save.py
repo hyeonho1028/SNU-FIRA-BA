@@ -38,6 +38,103 @@ def port_5km(data, lat, lon):
     return df3
 
 
+def Dmetrization(raw_data, data):
+    '''
+    raw data and data(train, test)
+    data include the y_value
+    '''
+    y_value = data[['MMSI', 'y_value7']]
+    data1 = data
+    raw_data = raw_data[raw_data['MMSI'].isin(data['MMSI'])].reset_index(drop=True)
+    data = raw_data
+
+    L1 = list()
+    L_time = list()
+    for i, j in data.groupby('MMSI').agg({'MMSI': 'unique', 'SPEED': 'count'}).reset_index(drop=True).apply(lambda x: (x['MMSI'][0], x['SPEED']), axis=1).tolist():
+        for k in range(0, 11):
+            k = k/10
+            df1 = data[data['MMSI'] == i][['ETA', 'MMSI', 'LAT', 'LON']].reset_index()
+
+            if k == 0:
+                L2 = list()
+                L2.extend(list(df1[['MMSI', 'LAT', 'LON']].iloc[0, :]))
+                L_time2 = list()
+                L_time2.extend(list(df1[['MMSI', 'ETA']].iloc[0, :]))
+                
+            elif 0 < k < 1:
+                L2.extend(list(df1[['LAT', 'LON']].iloc[int(round(j*k)), :]))
+                L_time2.extend(list(df1[['ETA']].iloc[int(round(j*k)), :]))
+
+            else:
+                L2.extend(list(df1[['LAT', 'LON']].iloc[-1, :]))
+                L_time2.extend(list(df1[['ETA']].iloc[-1, :]))
+        else:        
+            L1.append(L2)
+            L_time.append(L_time2)
+    else:
+        df = pd.DataFrame(L1)
+        df_time = pd.DataFrame(L_time)
+    
+    a = [['MMSI', 'Start_LAT', 'Start_LON'], chain.from_iterable([['rpst_value_LAT'+str(i), 'rpst_value_LON'+str(i)] for i in range(1,10)]), ['End_LAT', 'End_LON']]
+    a = list(chain.from_iterable(a))
+    
+    df.columns = a
+    df = pd.merge(df, data1, how='left', on='MMSI')
+    df = df.drop(columns=['rpst_value_LAT8', 'rpst_value_LON8', 'rpst_value_LAT9', 'rpst_value_LON9'])
+
+    data = df.drop(columns=['MMSI']).reset_index(drop=True)
+    end_lat = data.columns.tolist().index('End_LAT')
+    
+    df2 = pd.DataFrame()
+
+    for idx2 in range(len([data.iloc[:, [i, i+1]] for i in range(0, len(data.iloc[:, :end_lat].columns), 2)])):
+        L = [] 
+        for idx in data.index: 
+
+            lat1, lon1 = [data.iloc[:, [i, i+1]] for i in range(0, len(data.iloc[:, :end_lat].columns), 2)][idx2].apply(lambda x: x[idx])
+            lat2, lon2 = data.iloc[:, [end_lat, end_lat+1]].apply(lambda x: x[idx])
+
+            R = 6373.0 
+            lat1 = radians(lat1) 
+            lon1 = radians(lon1) 
+            lat2 = radians(lat2) 
+            lon2 = radians(lon2)
+            dlon = lon2 - lon1 
+            dlat = lat2 - lat1 
+            a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2 
+            c = 2 * atan2(sqrt(a), sqrt(1 - a)) 
+            distance = R * c
+            L.append(distance)
+        else:
+            df2 = pd.concat([df2, pd.DataFrame({'distance{}'.format(idx2+1) : L})], axis=1)
+    else:
+        df2 = pd.concat([df2, df[['MMSI']]], axis=1)
+        df_time2 = df_time.drop(columns=[0]).apply(lambda x: x.apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S")))
+        time1 = round((df_time2[11]-df_time2[1]) / np.timedelta64(1, 'h'), 1)
+        time7 = round((df_time2[11]-df_time2[7]) / np.timedelta64(1, 'h'), 1)
+        df_time = pd.concat([df_time[[0]], time1, time7], axis=1)
+        df_time.columns = ['MMSI', 'time1', 'time7']
+
+        df2 = pd.merge(df2, df_time, how='left', on='MMSI')
+        df2 = pd.merge(df2, y_value, how='left', on='MMSI')
+        df2['y_value'] = df2['y_value7']
+        df2 = df2.drop(columns='y_value7')
+        # df2 = pd.concat([df2, pd.DataFrame({'time_start': time1, 'time_last_point': time8, 'y_value': y_value.reset_index(drop=True)})], axis=1)
+
+    return df2.drop(columns='MMSI')
+
+def test_receive_t1t7(train, test):
+    train1 = train.iloc[:, :8]
+    test1 = test.iloc[:, :8]
+    
+    for ii, idx in enumerate([test1.iloc[:, :8].loc[i] for i in test1.index]):
+        test.loc[ii, 'time1'] = train.loc[np.argmin([np.mean((idx-train1.loc[j])**2) for j in train1.index]), 'time1']
+        test.loc[ii, 'time7'] = train.loc[np.argmin([np.mean((idx-train1.loc[j])**2) for j in train1.index]), 'time7']
+    
+    return test
+
+
+
 def representative_value(data):
     '''
     representative value 추출 / 출발점, 도착점, 9개의 대푯값 추출
@@ -114,7 +211,7 @@ def representative_value(data):
 
         # start, end point weight
         df[df.columns[['LAT' in i for i in df.columns]][:4]] = df[df.columns[['LAT' in i for i in df.columns]][:4]]*3
-        df[df.columns[['LOT' in i for i in df.columns]][:4]] = df[df.columns[['LOT' in i for i in df.columns]][:4]]*3
+        df[df.columns[['LON' in i for i in df.columns]][:4]] = df[df.columns[['LON' in i for i in df.columns]][:4]]*3
 
         return df
 
@@ -162,6 +259,7 @@ def route_similar(train, test):
     if 'cluster_prediction' in test.columns:
         test = test.drop(columns = ['cluster_prediction'])
     if 'MMSI' in test.columns:
+        test_MMSI = test['MMSI']
         test = test.drop(columns = ['MMSI'])
     if 'y_value7' in test.columns:
         true_value = test['y_value7']
@@ -176,6 +274,7 @@ def route_similar(train, test):
 
     test['cluster_prediction'] = train1.iloc[a,].index
 
+    test['MMSI'] = test_MMSI
     test['y_value7'] = true_value
 
     return test 
